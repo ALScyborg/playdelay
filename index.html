@@ -4,6 +4,14 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0a1628" />
+  <script>
+    try {
+      var t = localStorage.getItem("playdelay.lastTeam");
+      if (t === "byu" || t === "utah" || t === "asu" || t === "usc") {
+        document.documentElement.dataset.team = t;
+      }
+    } catch (e) {}
+  </script>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
   <link rel="icon" href="assets/favicon-32.png" type="image/png" sizes="32x32" />
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
@@ -117,12 +125,12 @@
 
       <section class="landing-schedule" aria-labelledby="sched-section-title">
         <h2 id="sched-section-title" class="section-title">2026 schedules</h2>
-        <p class="landing-sched-note">Times in your local timezone. Schedule via ESPN.</p>
+        <p class="landing-sched-note">Times in your local timezone. Tap a team name to set colors (saved for next visit). Schedule via ESPN.</p>
         <div class="landing-sched-grid">
-          <div id="landingSchedByu" class="landing-sched-card" aria-label="BYU schedule"></div>
-          <div id="landingSchedUtah" class="landing-sched-card" aria-label="Utah schedule"></div>
-          <div id="landingSchedAsu" class="landing-sched-card" aria-label="ASU schedule"></div>
-          <div id="landingSchedUsc" class="landing-sched-card" aria-label="USC schedule"></div>
+          <div id="landingSchedByu" class="landing-sched-card" data-team="byu" aria-label="BYU schedule"></div>
+          <div id="landingSchedUtah" class="landing-sched-card" data-team="utah" aria-label="Utah schedule"></div>
+          <div id="landingSchedAsu" class="landing-sched-card" data-team="asu" aria-label="ASU schedule"></div>
+          <div id="landingSchedUsc" class="landing-sched-card" data-team="usc" aria-label="USC schedule"></div>
         </div>
       </section>
 
@@ -144,6 +152,7 @@
       </p>
     </footer>
   </div>
+  <script src="landing-theme.js"></script>
   <script src="schedule.js"></script>
 </body>
 </html>

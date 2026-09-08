@@ -305,6 +305,7 @@
       pairs.map(async ([key, el]) => {
         if (!el) return;
         const meta = TEAM_META[key];
+        el.dataset.team = key;
         el.innerHTML =
           '<div class="sched-status sched-status-loading">Loading…</div>';
         try {
@@ -312,11 +313,19 @@
           const next = upcoming.slice(0, 3);
           const last = recent.slice(0, 2);
           const rows = [...last.reverse(), ...next];
+          el.dataset.team = key;
           el.innerHTML =
-            '<div class="landing-sched-head">' +
-            "<h3>" +
+            '<div class="landing-sched-toolbar">' +
+            '<button type="button" class="landing-sched-head" data-team-pick="' +
+            escapeHtml(key) +
+            '" aria-pressed="false" aria-label="Use ' +
             escapeHtml(meta.label) +
-            "</h3>" +
+            ' team colors">' +
+            '<span class="landing-sched-team-label">' +
+            escapeHtml(meta.label) +
+            "</span>" +
+            '<span class="landing-sched-pick-hint">Tap for colors</span>' +
+            "</button>" +
             '<a class="sched-espn-link" href="' +
             meta.scheduleUrl +
             '" target="_blank" rel="noopener noreferrer">ESPN</a>' +
@@ -328,11 +337,24 @@
               : '<p class="sched-empty">No games listed.</p>');
         } catch (err) {
           console.warn("Landing schedule failed", key, err);
+          el.dataset.team = key;
           el.innerHTML =
-            '<div class="sched-status sched-status-error">Couldn’t load ESPN schedule</div>' +
+            '<div class="landing-sched-toolbar">' +
+            '<button type="button" class="landing-sched-head" data-team-pick="' +
+            escapeHtml(key) +
+            '" aria-pressed="false" aria-label="Use ' +
+            escapeHtml(meta.label) +
+            ' team colors">' +
+            '<span class="landing-sched-team-label">' +
+            escapeHtml(meta.label) +
+            "</span>" +
+            '<span class="landing-sched-pick-hint">Tap for colors</span>' +
+            "</button>" +
             '<a class="sched-espn-link" href="' +
             meta.scheduleUrl +
-            '" target="_blank" rel="noopener noreferrer">Schedule via ESPN</a>';
+            '" target="_blank" rel="noopener noreferrer">ESPN</a>' +
+            "</div>" +
+            '<div class="sched-status sched-status-error">Couldn’t load ESPN schedule</div>';
         }
       })
     );
