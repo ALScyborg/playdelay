@@ -1,11 +1,50 @@
 /**
- * PlayDelay BYU — KSL NewsRadio with AudioWorklet delay.
+ * PlayDelay — multi-team radio with AudioWorklet delay.
  * Sound-first: never leave a captured <audio> silent after a failed graph.
  */
 (() => {
   "use strict";
 
-  const STREAM_URL = "https://bonneville.cdnstream1.com/2704_48.aac";
+  const TEAMS = {
+    byu: {
+      id: "byu",
+      label: "BYU",
+      station: "KSL NewsRadio",
+      streamUrl: "https://bonneville.cdnstream1.com/2704_48.aac",
+      accent: "navy",
+      title: "BYU · KSL — PlayDelay",
+      shortTitle: "BYU Radio",
+    },
+    utah: {
+      id: "utah",
+      label: "Utah",
+      station: "ESPN 700 KALL",
+      streamUrl: "https://ais-sa1.streamon.fm/7349_48k.aac",
+      accent: "crimson",
+      title: "Utah · ESPN 700 — PlayDelay",
+      shortTitle: "Utah Radio",
+    },
+    asu: {
+      id: "asu",
+      label: "ASU",
+      station: "Radio coming soon",
+      streamUrl: null,
+      accent: "maroon",
+      title: "ASU — PlayDelay",
+      shortTitle: "ASU",
+    },
+    usc: {
+      id: "usc",
+      label: "USC",
+      station: "Radio coming soon",
+      streamUrl: null,
+      accent: "cardinal",
+      title: "USC — PlayDelay",
+      shortTitle: "USC",
+    },
+  };
+
+  const TEAM_STORAGE_KEY = "playdelay.lastTeam";
   const WORKLET_URL = "./worklets/delay-processor.js";
   const MAX_DELAY = 120;
 
@@ -16,6 +55,10 @@
   const statusChip = document.getElementById("statusChip");
   const bannerEl = document.getElementById("banner");
   const toastEl = document.getElementById("toast");
+  const brandMarkEl = document.getElementById("brandMark");
+  const stationTitleEl = document.getElementById("stationTitle");
+  const teamToggle = document.getElementById("teamToggle");
+  const teamButtons = Array.from(document.querySelectorAll("[data-team]"));
   const presetButtons = Array.from(document.querySelectorAll("[data-delay]"));
   const stepButtons = Array.from(document.querySelectorAll("[data-delta]"));
   const audioHost = document.getElementById("audio");
@@ -43,6 +86,95 @@
   let toastTimer = 0;
   let silenceWatch = 0;
   let workletModuleLoaded = false;
+  let switchingTeam = false;
+
+  function readStoredTeamId() {
+    try {
+      const raw = localStorage.getItem(TEAM_STORAGE_KEY);
+      if (raw && TEAMS[raw]) return raw;
+    } catch (_) {}
+    return "byu";
+  }
+
+  /** @type {typeof TEAMS[keyof typeof TEAMS]} */
+  let currentTeam = TEAMS[readStoredTeamId()] || TEAMS.byu;
+
+  function streamUrl() {
+    return currentTeam.streamUrl || "";
+  }
+
+  function hasStream() {
+    return !!(currentTeam && currentTeam.streamUrl);
+  }
+
+  function refreshSchedule() {
+    const sched = window.PlayDelaySchedule;
+    if (sched && typeof sched.mountPlayer === "function") {
+      sched.mountPlayer(currentTeam.id);
+    }
+  }
+
+  function updateStreamAvailability() {
+    const ok = hasStream();
+    playBtn.disabled = !ok;
+    playBtn.setAttribute("aria-disabled", ok ? "false" : "true");
+    if (!ok) {
+      playBtn.setAttribute("aria-pressed", "false");
+      playBtn.textContent = "Play";
+      setStatus("idle", "Soon");
+      showBanner(
+        currentTeam.label +
+          " radio stream coming soon. Schedule is below — pick BYU or Utah to listen now.",
+        false
+      );
+    } else {
+      // Clear coming-soon banner when switching back to a live team (unless playing error)
+      if (
+        bannerEl &&
+        !bannerEl.hidden &&
+        /coming soon/i.test(bannerEl.textContent || "")
+      ) {
+        showBanner("", false);
+      }
+      if (!isPlaying) {
+        playBtn.disabled = false;
+        setStatus("idle", "Idle");
+      }
+    }
+  }
+
+
+  function persistTeam(id) {
+    try {
+      localStorage.setItem(TEAM_STORAGE_KEY, id);
+    } catch (_) {}
+  }
+
+  function applyTeamBranding(team) {
+    document.documentElement.dataset.team = team.id;
+    document.body.dataset.team = team.id;
+    if (brandMarkEl) brandMarkEl.textContent = team.label;
+    if (stationTitleEl) stationTitleEl.textContent = team.station;
+    document.title = team.title;
+    const themeMeta = document.querySelector('meta[name="theme-color"]');
+    if (themeMeta) {
+      const themes = {
+        byu: "#0a1628",
+        utah: "#1a0508",
+        asu: "#1a0a12",
+        usc: "#1a0c0c",
+      };
+      themeMeta.setAttribute("content", themes[team.id] || "#0a1628");
+    }
+    teamButtons.forEach((btn) => {
+      const active = btn.dataset.team === team.id;
+      btn.classList.toggle("is-active", active);
+      btn.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+    if (teamToggle) {
+      teamToggle.setAttribute("data-active", team.id);
+    }
+  }
 
   function freshAudio(crossOrigin) {
     const el = document.createElement("audio");
@@ -51,7 +183,8 @@
     el.playsInline = true;
     el.setAttribute("playsinline", "");
     if (crossOrigin) el.crossOrigin = "anonymous";
-    el.src = STREAM_URL;
+    const url = streamUrl();
+    if (url) el.src = url;
     // Replace previous element (MediaElementSource permanently captures one)
     if (audio && audio.parentNode) {
       audio.pause();
@@ -134,17 +267,20 @@
 
   function rememberDelayPreference(seconds) {
     const auth = window.PlayDelayAuth;
-    if (!auth) return;
-    const session = auth.getSession();
-    if (!session) return;
+    if (!auth || typeof auth.setPrefs !== "function") return;
+    const session =
+      typeof auth.getSession === "function" ? auth.getSession() : null;
+    // getSession may be async in current auth; only sync prefs objects work
+    if (!session || typeof session.then === "function" || !session.email) return;
     auth.setPrefs(session.email, { lastDelay: seconds });
   }
 
   function restoreDelayPreference() {
     const auth = window.PlayDelayAuth;
-    if (!auth) return;
-    const session = auth.getSession();
-    if (!session) return;
+    if (!auth || typeof auth.getPrefs !== "function") return;
+    const session =
+      typeof auth.getSession === "function" ? auth.getSession() : null;
+    if (!session || typeof session.then === "function" || !session.email) return;
     const prefs = auth.getPrefs(session.email);
     if (typeof prefs.lastDelay === "number" && prefs.lastDelay >= 0) {
       setDelay(prefs.lastDelay, { fromUser: false });
@@ -310,6 +446,11 @@
   }
 
   async function play() {
+    if (!hasStream()) {
+      updateStreamAvailability();
+      showToast(currentTeam.label + " radio stream coming soon");
+      return;
+    }
     setStatus("loading", "Loading");
     playBtn.disabled = true;
     showBanner("", false);
@@ -363,6 +504,63 @@
     else await play();
   }
 
+  async function selectTeam(teamId, { autoResume = true } = {}) {
+    const next = TEAMS[teamId];
+    if (!next || next.id === currentTeam.id) return;
+    if (switchingTeam) return;
+    switchingTeam = true;
+
+    const wasPlaying = isPlaying;
+    const keptDelay = targetDelay;
+
+    try {
+      window.clearTimeout(silenceWatch);
+      if (audio) {
+        try {
+          audio.pause();
+        } catch (_) {}
+      }
+      await teardownGraph();
+      isPlaying = false;
+      playBtn.setAttribute("aria-pressed", "false");
+      playBtn.textContent = "Play";
+      setStatus("idle", "Idle");
+
+      currentTeam = next;
+      persistTeam(next.id);
+      applyTeamBranding(next);
+      refreshSchedule();
+      workletFailed = false;
+      workletFailReason = "";
+
+      // Keep delay setting across teams when reasonable
+      targetDelay = keptDelay;
+      displayDelay = keptDelay;
+      updateDelayUI();
+
+      if (hasStream()) {
+        freshAudio(false);
+        applyVolume();
+        showToast(next.label + " · " + next.station);
+        updateStreamAvailability();
+        if (autoResume && wasPlaying) {
+          await play();
+        }
+      } else {
+        if (audio) {
+          try {
+            audio.removeAttribute("src");
+            audio.load();
+          } catch (_) {}
+        }
+        showToast(next.label + " · schedule only");
+        updateStreamAvailability();
+      }
+    } finally {
+      switchingTeam = false;
+    }
+  }
+
   function wireAudioEvents(el) {
     el.addEventListener("waiting", () => {
       if (isPlaying) setStatus("loading", "Loading");
@@ -408,10 +606,19 @@
     );
   });
 
+  teamButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      selectTeam(btn.dataset.team);
+    });
+  });
+
   wireAudioEvents(audio);
+  applyTeamBranding(currentTeam);
+  refreshSchedule();
+  updateStreamAvailability();
   // Initial element: prepare src without capturing yet
   audio.preload = "auto";
-  audio.src = STREAM_URL;
+  if (hasStream()) audio.src = streamUrl();
 
   document.addEventListener("keydown", (event) => {
     const tag = (event.target && event.target.tagName) || "";

@@ -1,7 +1,7 @@
 {
-  "name": "BYU Radio",
-  "short_name": "BYU Radio",
-  "description": "PlayDelay — sync KSL NewsRadio to your TV for BYU games. No login.",
+  "name": "PlayDelay",
+  "short_name": "PlayDelay",
+  "description": "PlayDelay — BYU, Utah, ASU & USC schedules; radio sync for BYU & Utah.",
   "start_url": "./player.html",
   "display": "standalone",
   "background_color": "#0a1628",
@@ -9,13 +9,13 @@
   "orientation": "any",
   "icons": [
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='32' fill='%23002e5d'/%3E%3Ctext x='96' y='112' text-anchor='middle' font-family='system-ui,sans-serif' font-size='56' font-weight='800' fill='%23ffffff'%3EBYU%3C/text%3E%3C/svg%3E",
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='32' fill='%23002e5d'/%3E%3Ctext x='96' y='112' text-anchor='middle' font-family='system-ui,sans-serif' font-size='48' font-weight='800' fill='%23ffffff'%3EPD%3C/text%3E%3C/svg%3E",
       "sizes": "192x192",
       "type": "image/svg+xml",
       "purpose": "any"
     },
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%23002e5d'/%3E%3Ctext x='256' y='300' text-anchor='middle' font-family='system-ui,sans-serif' font-size='150' font-weight='800' fill='%23ffffff'%3EBYU%3C/text%3E%3C/svg%3E",
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%23002e5d'/%3E%3Ctext x='256' y='300' text-anchor='middle' font-family='system-ui,sans-serif' font-size='128' font-weight='800' fill='%23ffffff'%3EPD%3C/text%3E%3C/svg%3E",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any"

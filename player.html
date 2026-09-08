@@ -6,11 +6,11 @@
   <meta name="theme-color" content="#0a1628" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="BYU Radio" />
-  <meta name="description" content="PlayDelay BYU — sync KSL NewsRadio to your TV. Sign in, then Play. Free while we test." />
+  <meta name="apple-mobile-web-app-title" content="PlayDelay" />
+  <meta name="description" content="PlayDelay — BYU, Utah, ASU & USC schedules; radio sync for BYU (KSL) & Utah (ESPN 700). Sign in, pick a team, then Play." />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="stylesheet" href="styles.css" />
-  <title>BYU Radio — PlayDelay</title>
+  <title>PlayDelay — Radio ↔ TV sync</title>
 </head>
 <body>
   <div class="app player-app">
@@ -20,9 +20,9 @@
 
     <header class="header">
       <div class="brand">
-        <a class="brand-mark brand-mark-link" href="index.html" aria-label="PlayDelay home">BYU</a>
+        <a class="brand-mark brand-mark-link" href="index.html" id="brandMark" aria-label="PlayDelay home">BYU</a>
         <div class="brand-text">
-          <h1>KSL NewsRadio</h1>
+          <h1 id="stationTitle">KSL NewsRadio</h1>
           <p class="subtitle">PlayDelay · radio ↔ TV sync</p>
         </div>
       </div>
@@ -39,6 +39,19 @@
     <div id="toast" class="toast" hidden role="status" aria-live="polite"></div>
 
     <main class="main">
+      <section
+        class="team-picker"
+        id="teamToggle"
+        role="group"
+        aria-label="Team"
+        data-active="byu"
+      >
+        <button type="button" class="btn btn-team is-active" data-team="byu" aria-pressed="true">BYU</button>
+        <button type="button" class="btn btn-team" data-team="utah" aria-pressed="false">Utah</button>
+        <button type="button" class="btn btn-team" data-team="asu" aria-pressed="false">ASU</button>
+        <button type="button" class="btn btn-team" data-team="usc" aria-pressed="false">USC</button>
+      </section>
+
       <section class="delay-readout" aria-label="Current delay">
         <div id="delayValue" class="delay-value">Live</div>
         <div class="delay-label">Audio delay</div>
@@ -73,6 +86,19 @@
         <button type="button" class="btn btn-step" data-delta="10">+10s</button>
       </section>
 
+
+      <section class="schedule-panel" id="schedulePanel" aria-label="Team schedule">
+        <div class="schedule-panel-head">
+          <h2 id="scheduleTitle" class="sched-panel-title">BYU schedule</h2>
+          <p id="scheduleAttr" class="sched-attr">
+            Schedule via <a href="https://www.espn.com/college-football/team/schedule/_/id/252" target="_blank" rel="noopener noreferrer">ESPN</a>
+          </p>
+        </div>
+        <div id="scheduleStatus" class="sched-status" hidden></div>
+        <div id="scheduleUpcoming"></div>
+        <div id="scheduleRecent"></div>
+      </section>
+
       <p class="sync-tip">
         Hear play before you see it → add delay.
         See before you hear → delay the TV.
@@ -86,6 +112,7 @@
     <!-- Hidden audio element; MediaElementSource when delay engine works -->
     <audio id="audio" preload="none" playsinline></audio>
   </div>
+  <script src="schedule.js"></script>
   <script src="player-boot.js"></script>
 </body>
 </html>

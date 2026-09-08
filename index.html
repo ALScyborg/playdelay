@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0a1628" />
-  <meta name="description" content="PlayDelay — hear KSL NewsRadio in sync with your TV for BYU games. Create a free account, then play." />
+  <meta name="description" content="PlayDelay — BYU, Utah, ASU & USC schedules; sync BYU (KSL) or Utah (ESPN 700) radio to your TV. Create a free account, then play." />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="stylesheet" href="styles.css" />
   <title>PlayDelay — Hear the game in sync</title>
@@ -16,7 +16,7 @@
         <span class="brand-mark" aria-hidden="true">PD</span>
         <div class="brand-text">
           <h1>PlayDelay</h1>
-          <p class="subtitle">Radio ↔ TV sync for BYU</p>
+          <p class="subtitle">Radio ↔ TV sync · BYU, Utah, ASU &amp; USC</p>
         </div>
       </div>
       <div class="header-actions">
@@ -26,12 +26,12 @@
 
     <main>
       <section class="hero" aria-labelledby="hero-title">
-        <p class="hero-kicker">BYU · KSL NewsRadio</p>
+        <p class="hero-kicker">BYU · Utah · ASU · USC</p>
         <h2 id="hero-title" class="hero-title">Hear the game in sync with your TV</h2>
         <p class="hero-lead">
           Mute the broadcast, play the radio call on your phone, and dial a delay
           until the whistle and the picture line up. Built for one-handed use —
-          huge buttons.
+          huge buttons. Pick BYU, Utah, ASU, or USC in the player (radio live for BYU &amp; Utah; ASU/USC streams soon).
         </p>
         <figure class="hero-art">
           <img
@@ -44,7 +44,7 @@
         <div class="hero-actions">
           <a class="btn btn-cta" href="login.html?next=player.html">Create account / Sign in</a>
         </div>
-        <p class="hero-note">Create account → sign in → play · free while we test · BYU / KSL</p>
+        <p class="hero-note">Create account → sign in → pick team → play · free while we test · radio: BYU &amp; Utah</p>
       </section>
 
 
@@ -97,8 +97,8 @@
           <li class="step-card">
             <img class="step-icon" src="assets/icon-radio.svg" width="48" height="48" alt="" />
             <div>
-              <h3>Play KSL</h3>
-              <p>Open the BYU player and tap Play to start KSL NewsRadio.</p>
+              <h3>Pick your team</h3>
+              <p>Open the player, tap BYU, Utah, ASU, or USC. Play radio for BYU (KSL) or Utah (ESPN 700).</p>
             </div>
           </li>
           <li class="step-card">
@@ -111,10 +111,24 @@
         </ol>
       </section>
 
+
+      <section class="landing-schedule" aria-labelledby="sched-section-title">
+        <h2 id="sched-section-title" class="section-title">2026 schedules</h2>
+        <p class="landing-sched-note">Times in Arizona (PT). Schedule via ESPN.</p>
+        <div class="landing-sched-grid">
+          <div id="landingSchedByu" class="landing-sched-card" aria-label="BYU schedule"></div>
+          <div id="landingSchedUtah" class="landing-sched-card" aria-label="Utah schedule"></div>
+          <div id="landingSchedAsu" class="landing-sched-card" aria-label="ASU schedule"></div>
+          <div id="landingSchedUsc" class="landing-sched-card" aria-label="USC schedule"></div>
+        </div>
+      </section>
+
       <section class="focus-note" aria-label="Scope">
         <p>
-          PlayDelay here is intentionally narrow: <strong>BYU games</strong> on
-          <strong>KSL NewsRadio</strong>. Create a free account, sign in, then open the player.
+          PlayDelay covers <strong>BYU</strong>, <strong>Utah</strong>, <strong>ASU</strong>, and
+          <strong>USC</strong> schedules (via ESPN). Radio sync is live for
+          <strong>BYU · KSL NewsRadio</strong> and <strong>Utah · ESPN 700 KALL</strong>
+          (ASU/USC radio coming soon). Create a free account, sign in, then open the player.
         </p>
       </section>
     </main>
@@ -126,5 +140,6 @@
       </p>
     </footer>
   </div>
+  <script src="schedule.js"></script>
 </body>
 </html>
