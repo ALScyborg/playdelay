@@ -436,7 +436,4 @@
   updateDelayUI();
   applyVolume();
   restoreDelayPreference();
-  window.addEventListener("playdelay:authchange", () => {
-    restoreDelayPreference();
-  });
 })();

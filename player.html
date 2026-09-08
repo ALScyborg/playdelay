@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="BYU Radio" />
-  <meta name="description" content="PlayDelay BYU — sync KSL NewsRadio to your TV. Huge buttons; optional demo login does not block Play." />
+  <meta name="description" content="PlayDelay BYU — sync KSL NewsRadio to your TV. Huge buttons. No login." />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="stylesheet" href="styles.css" />
   <title>BYU Radio — PlayDelay</title>
@@ -27,7 +27,6 @@
         </div>
       </div>
       <div class="header-end">
-        <div id="authSlot" class="auth-slot"></div>
         <div id="statusChip" class="status-chip status-idle" role="status" aria-live="polite">Idle</div>
       </div>
     </header>
@@ -84,7 +83,6 @@
     <audio id="audio" preload="none" playsinline></audio>
   </div>
 
-  <script src="auth.js" defer></script>
   <script src="app.js" defer></script>
 </body>
 </html>
