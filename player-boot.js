@@ -160,6 +160,40 @@
     location.replace("player.html");
   }
 
+
+  const FREE_UNTIL_ISO = "2026-09-15T07:00:00.000Z";
+  const FREE_UNTIL_MS = Date.parse(FREE_UNTIL_ISO);
+
+  function isFreeWeekend() {
+    return Date.now() < FREE_UNTIL_MS;
+  }
+
+  async function fetchProfileCredits() {
+    const session = await getSession();
+    if (!session || !session.access_token || !session.user) return null;
+    const uid = session.user.id;
+    const url =
+      SUPABASE_URL +
+      "/rest/v1/profiles?select=game_credits,games_used&id=eq." +
+      encodeURIComponent(uid) +
+      "&limit=1";
+    const res = await fetch(url, {
+      headers: authHeaders({
+        Authorization: "Bearer " + session.access_token,
+      }),
+    });
+    if (!res.ok) return null;
+    const rows = await res.json().catch(() => []);
+    if (!Array.isArray(rows) || !rows.length) {
+      return { game_credits: 0, games_used: 0 };
+    }
+    const row = rows[0] || {};
+    return {
+      game_credits: Number(row.game_credits) || 0,
+      games_used: Number(row.games_used) || 0,
+    };
+  }
+
   window.PlayDelayAuth = {
     getSession,
     getUser,
@@ -168,6 +202,9 @@
     signOut,
     requireSessionOrRedirect,
     routeAfterAuth,
+    FREE_UNTIL_ISO,
+    isFreeWeekend,
+    fetchProfileCredits,
   };
 })();
 /**
@@ -190,6 +227,35 @@
     document.body.appendChild(s);
   }
 
+  function formatCreditsLabel(profile) {
+    if (auth.isFreeWeekend && auth.isFreeWeekend()) {
+      return "Free weekend";
+    }
+    const n = profile && typeof profile.game_credits === "number" ? profile.game_credits : 0;
+    if (n === 1) return "1 game left";
+    return n + " games left";
+  }
+
+  async function wireCreditsChip() {
+    const chip = document.getElementById("creditsChip");
+    if (!chip) return;
+    try {
+      if (auth.isFreeWeekend && auth.isFreeWeekend()) {
+        chip.textContent = "Free weekend";
+        chip.hidden = false;
+        chip.classList.add("credits-chip-free");
+        return;
+      }
+      const profile = await auth.fetchProfileCredits();
+      chip.textContent = formatCreditsLabel(profile);
+      chip.hidden = false;
+      chip.classList.toggle("credits-chip-free", false);
+    } catch (e) {
+      console.warn("credits chip", e);
+      chip.hidden = true;
+    }
+  }
+
   function wireSession(user) {
     const chip = document.getElementById("sessionChip");
     const emailEl = document.getElementById("sessionEmail");
@@ -204,6 +270,7 @@
         location.replace("login.html?next=player.html");
       });
     }
+    wireCreditsChip();
   }
 
   (async () => {

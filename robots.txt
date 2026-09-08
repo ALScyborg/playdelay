@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
+Allow: /pricing.html
 
 Sitemap: https://playdelay.app/sitemap.xml

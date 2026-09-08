@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a1628" />
+  <script>
+    try {
+      var t = localStorage.getItem("playdelay.lastTeam");
+      if (t === "byu" || t === "utah" || t === "asu" || t === "usc") {
+        document.documentElement.dataset.team = t;
+      }
+    } catch (e) {}
+  </script>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="assets/favicon-32.png" type="image/png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+  <title>Pricing — PlayDelay</title>
+  <meta name="description" content="PlayDelay pricing: $2 per game or $20 for 14 games. Free this weekend — play without a paywall." />
+  <link rel="canonical" href="https://playdelay.app/pricing.html" />
+  <meta property="og:title" content="Pricing — PlayDelay" />
+  <meta property="og:description" content="$2 per game or $20 for 14 games. Free this weekend." />
+  <meta property="og:url" content="https://playdelay.app/pricing.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://playdelay.app/assets/og-image.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Pricing — PlayDelay" />
+  <meta name="twitter:description" content="$2 per game or $20 for 14 games. Free this weekend." />
+  <meta name="twitter:image" content="https://playdelay.app/assets/og-image.png" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="landing env-landing pricing-page">
+  <div class="landing-shell">
+    <header class="landing-header">
+      <div class="brand">
+        <a class="brand-mark brand-mark-link" href="index.html" aria-label="PlayDelay home">PD</a>
+        <div class="brand-text">
+          <h1>PlayDelay</h1>
+          <p class="subtitle">Pricing · credits</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <a class="nav-link" href="index.html">Home</a>
+        <a class="nav-link" href="player.html">Play</a>
+        <a class="nav-link" href="login.html?next=pricing.html" id="pricingAuthLink">Sign in</a>
+      </div>
+    </header>
+
+    <main>
+      <div id="successBanner" class="banner banner-ok pricing-success" hidden role="status" aria-live="polite"></div>
+
+      <section class="free-weekend-banner" aria-label="Free this weekend">
+        <p class="free-weekend-kicker">Limited time</p>
+        <h2 class="free-weekend-title">Free this weekend</h2>
+        <p class="free-weekend-lead">
+          Play is <strong>not gated</strong> through Sunday night (America/Phoenix).
+          Buy credits anytime — they’ll sync to your account when purchases land.
+        </p>
+        <a class="btn btn-cta free-weekend-cta" href="player.html">Open player — free</a>
+      </section>
+
+      <section class="pricing-hero" aria-labelledby="pricing-title">
+        <h2 id="pricing-title" class="hero-title">Simple game credits</h2>
+        <p class="hero-lead">
+          Huge taps. No subscriptions. Stripe checkout (test mode) — paywall not enforced yet.
+        </p>
+      </section>
+
+      <section id="creditsPanel" class="credits-panel" hidden aria-live="polite">
+        <h3 class="credits-panel-title">Your credits</h3>
+        <p class="credits-panel-row">
+          <span class="credits-panel-label">Games left</span>
+          <strong id="creditsLeft">—</strong>
+        </p>
+        <p class="credits-panel-row">
+          <span class="credits-panel-label">Games used</span>
+          <strong id="creditsUsed">—</strong>
+        </p>
+        <p id="creditsFreeNote" class="credits-panel-note" hidden>Free weekend active — Play stays open.</p>
+      </section>
+
+      <section class="pricing-grid" aria-label="Price plans">
+        <article class="price-card">
+          <h3 class="price-card-name">1 game</h3>
+          <p class="price-card-amount"><span class="price-currency">$</span>2</p>
+          <p class="price-card-detail">One game credit · pay as you go</p>
+          <a
+            class="btn btn-cta price-buy"
+            href="https://buy.stripe.com/test_fZudR914Yf1k0RM8k2dnW02"
+            target="_blank"
+            rel="noopener noreferrer"
+          >Buy 1 game · $2</a>
+        </article>
+
+        <article class="price-card price-card-featured">
+          <p class="price-card-badge">Best value</p>
+          <h3 class="price-card-name">14 games</h3>
+          <p class="price-card-amount"><span class="price-currency">$</span>20</p>
+          <p class="price-card-detail">About $1.43 each · season pack</p>
+          <a
+            class="btn btn-cta price-buy"
+            href="https://buy.stripe.com/test_7sYdR914YaL4bwqbwednW03"
+            target="_blank"
+            rel="noopener noreferrer"
+          >Buy 14 games · $20</a>
+        </article>
+      </section>
+
+      <section class="focus-note pricing-note" aria-label="Notes">
+        <p>
+          Stripe links are <strong>test mode</strong>. Credits appear on your account when
+          purchases sync. Until then, Play stays free this weekend.
+        </p>
+      </section>
+    </main>
+
+    <footer class="landing-footer">
+      <p><a href="index.html">Home</a> · <a href="player.html">Play</a> · <a href="mailto:support@playdelay.app">support@playdelay.app</a></p>
+    </footer>
+  </div>
+  <script src="landing-theme.js"></script>
+  <script src="supabase-auth.js"></script>
+  <script src="pricing.js"></script>
+</body>
+</html>
