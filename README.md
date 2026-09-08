@@ -1,8 +1,22 @@
 # PlayDelay (BYU)
 
-Landing + KSL player. **Email only** (no password / no PIN) before the player. Email saved in the browser.
+Landing + KSL delay player. **Free for now:** create a Supabase account, sign in, then play.
 
-Live: https://alscyborg.github.io/playdelay/
+- Live (GitHub Pages): https://alscyborg.github.io/playdelay/
+- Custom domain: https://playdelay.app/
+
+## Flow
+
+1. Open the site → **Sign in / Sign up** (`login.html`)
+2. Create an account with email + password (min 6 characters), or sign in
+3. You’re sent to **`player.html`** (no payment gate right now)
+
+## Auth
+
+- Supabase project ref: `itcgsbzcopdkccobcfha`
+- Frontend uses the public anon key only (see `supabase-auth.js`)
+- Session stored in `localStorage` (`playdelay.supabase.session`)
+- Auth is email/password via Supabase Auth HTTP API (no PIN)
 
 ## Local
 
@@ -13,3 +27,8 @@ python3 -m http.server 8765
 - http://127.0.0.1:8765/
 - http://127.0.0.1:8765/login.html
 - http://127.0.0.1:8765/player.html
+
+## Notes
+
+- Stripe / paid unlock is **not** required in this build (may return later).
+- Do not put service-role or Stripe secret keys in this repo.

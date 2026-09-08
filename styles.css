@@ -728,3 +728,70 @@ a {
     max-width: 58%;
   }
 }
+
+
+/* ——— Supabase auth UI ——— */
+
+.auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.auth-tab {
+  min-height: var(--tap-min);
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--muted);
+  font-family: inherit;
+  font-size: 1.05rem;
+  font-weight: 650;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.auth-tab.is-active {
+  background: var(--navy-bright);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: var(--white);
+}
+
+.login-info {
+  margin: 8px 0 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(61, 214, 140, 0.1);
+  border: 1px solid rgba(61, 214, 140, 0.4);
+  color: var(--live);
+  font-size: 0.95rem;
+}
+
+.session-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(240px, 52vw);
+}
+
+.session-email {
+  font-size: 0.8rem;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 130px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.banner.banner-ok {
+  background: rgba(61, 214, 140, 0.12);
+  border-color: rgba(61, 214, 140, 0.45);
+  color: var(--live);
+}

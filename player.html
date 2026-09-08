@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="BYU Radio" />
-  <meta name="description" content="PlayDelay BYU — sync KSL NewsRadio to your TV. Enter email once, then Play." />
+  <meta name="description" content="PlayDelay BYU — sync KSL NewsRadio to your TV. Sign in, then Play. Free while we test." />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="stylesheet" href="styles.css" />
   <title>BYU Radio — PlayDelay</title>
@@ -86,30 +86,6 @@
     <!-- Hidden audio element; MediaElementSource when delay engine works -->
     <audio id="audio" preload="none" playsinline></audio>
   </div>
-  <script src="auth-gate.js"></script>
-  <script>
-    if (!window.PlayDelayGate.requireSessionOrRedirect()) { /* redirecting */ }
-  </script>
-  <script src="app.js" defer></script>
-  <script>
-    (function () {
-      var gate = window.PlayDelayGate;
-      if (!gate || !gate.getSession()) return;
-      var s = gate.getSession();
-      var chip = document.getElementById("sessionChip");
-      var emailEl = document.getElementById("sessionEmail");
-      var outBtn = document.getElementById("signOutBtn");
-      if (chip && emailEl) {
-        emailEl.textContent = s.email;
-        chip.hidden = false;
-      }
-      if (outBtn) {
-        outBtn.addEventListener("click", function () {
-          gate.clearSession();
-          location.replace("login.html?next=player.html");
-        });
-      }
-    })();
-  </script>
+  <script src="player-boot.js"></script>
 </body>
 </html>

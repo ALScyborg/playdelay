@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0a1628" />
-  <meta name="description" content="Enter your email to use PlayDelay." />
+  <meta name="description" content="Sign in or create a PlayDelay account." />
   <link rel="stylesheet" href="styles.css" />
-  <title>Continue — PlayDelay</title>
+  <title>Sign in — PlayDelay</title>
 </head>
 <body class="landing">
   <div class="landing-shell login-shell">
@@ -15,23 +15,33 @@
         <span class="brand-mark" aria-hidden="true">PD</span>
         <div class="brand-text">
           <h1>PlayDelay</h1>
-          <p class="subtitle">Email to continue</p>
+          <p class="subtitle">Account required</p>
         </div>
       </div>
     </header>
 
     <main>
       <section class="login-card" aria-labelledby="login-title">
-        <h2 id="login-title" class="section-title">Enter your email</h2>
-        <p class="login-demo-note">
-          We save it on this device so we know who’s testing. No password.
+        <div class="auth-tabs" role="tablist" aria-label="Sign in or sign up">
+          <button type="button" class="auth-tab is-active" id="tabSignIn" role="tab" aria-selected="true">
+            Sign in
+          </button>
+          <button type="button" class="auth-tab" id="tabSignUp" role="tab" aria-selected="false">
+            Sign up
+          </button>
+        </div>
+
+        <h2 id="login-title" class="section-title">Sign in</h2>
+        <p class="login-demo-note" id="authNote">
+          Use your email and password to open the player. Free while we test.
         </p>
 
-        <form id="loginForm" class="login-form" novalidate>
+        <form id="authForm" class="login-form" novalidate>
           <label class="field">
             <span class="field-label">Email</span>
             <input
               id="email"
+              class="field-input"
               name="email"
               type="email"
               autocomplete="email"
@@ -41,11 +51,26 @@
             />
           </label>
 
+          <label class="field">
+            <span class="field-label">Password</span>
+            <input
+              id="password"
+              class="field-input"
+              name="password"
+              type="password"
+              autocomplete="current-password"
+              required
+              minlength="6"
+              placeholder="At least 6 characters"
+            />
+          </label>
+
           <p id="loginError" class="login-error" role="alert" hidden></p>
+          <p id="loginInfo" class="login-info" role="status" hidden></p>
 
           <div class="login-actions">
-            <button type="submit" class="btn btn-cta" id="continueBtn">
-              Continue to player
+            <button type="submit" class="btn btn-cta" id="submitBtn">
+              Sign in
             </button>
           </div>
         </form>
@@ -57,35 +82,6 @@
     </footer>
   </div>
 
-  <script src="auth-gate.js"></script>
-  <script>
-    (() => {
-      const gate = window.PlayDelayGate;
-      const params = new URLSearchParams(location.search);
-      let next = params.get("next") || "player.html";
-      if (next === "login.html" || next.includes("://")) next = "player.html";
-
-      if (gate.getSession()) {
-        location.replace(next);
-        return;
-      }
-
-      const form = document.getElementById("loginForm");
-      const err = document.getElementById("loginError");
-
-      form.addEventListener("submit", (e) => {
-        e.preventDefault();
-        err.hidden = true;
-        const email = document.getElementById("email").value.trim();
-        if (!email || !email.includes("@") || !email.includes(".")) {
-          err.textContent = "Enter a valid email.";
-          err.hidden = false;
-          return;
-        }
-        gate.setSession(email);
-        location.replace(next);
-      });
-    })();
-  </script>
+  <script src="auth-app.js"></script>
 </body>
 </html>

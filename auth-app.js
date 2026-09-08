@@ -1,0 +1,270 @@
+/**
+ * PlayDelay — Supabase Auth via fetch (no CDN). Free access after login.
+ */
+(() => {
+  const SUPABASE_URL = "https://itcgsbzcopdkccobcfha.supabase.co";
+  const SUPABASE_ANON_KEY =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml0Y2dzYnpjb3Bka2Njb2JjZmhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg4MzEwOTksImV4cCI6MjEwNDQwNzA5OX0.OFiNUkxAV4XDIgGVzbcKhSywcibcXnNM8Xts1KnEVE8";
+  const STORAGE_KEY = "playdelay.supabase.session";
+
+  function authHeaders(extra) {
+    const h = {
+      apikey: SUPABASE_ANON_KEY,
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + SUPABASE_ANON_KEY,
+    };
+    if (extra) Object.assign(h, extra);
+    return h;
+  }
+
+  function saveSession(session) {
+    if (!session) {
+      localStorage.removeItem(STORAGE_KEY);
+      return;
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+  }
+
+  function readSession() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+
+  async function getSession() {
+    const session = readSession();
+    if (!session || !session.access_token) return null;
+    // Light expiry check
+    if (session.expires_at && session.expires_at * 1000 < Date.now() - 30000) {
+      if (session.refresh_token) {
+        try {
+          return await refreshSession(session.refresh_token);
+        } catch {
+          saveSession(null);
+          return null;
+        }
+      }
+      saveSession(null);
+      return null;
+    }
+    return session;
+  }
+
+  async function refreshSession(refreshToken) {
+    const res = await fetch(SUPABASE_URL + "/auth/v1/token?grant_type=refresh_token", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error_description || data.msg || data.error || "Session expired");
+    const session = {
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+      expires_at: data.expires_at,
+      expires_in: data.expires_in,
+      token_type: data.token_type,
+      user: data.user,
+    };
+    saveSession(session);
+    return session;
+  }
+
+  async function getUser() {
+    const session = await getSession();
+    return (session && session.user) || null;
+  }
+
+  async function signUp(email, password) {
+    const res = await fetch(SUPABASE_URL + "/auth/v1/signup", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({
+        email: String(email || "").trim().toLowerCase(),
+        password: String(password || ""),
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error_description || data.msg || data.error || "Sign up failed");
+    if (data.access_token) {
+      const session = {
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+        expires_at: data.expires_at,
+        expires_in: data.expires_in,
+        token_type: data.token_type,
+        user: data.user,
+      };
+      saveSession(session);
+      return { user: data.user, session };
+    }
+    return { user: data.user || data, session: null };
+  }
+
+  async function signIn(email, password) {
+    const res = await fetch(SUPABASE_URL + "/auth/v1/token?grant_type=password", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({
+        email: String(email || "").trim().toLowerCase(),
+        password: String(password || ""),
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error_description || data.msg || data.error || "Sign in failed");
+    const session = {
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+      expires_at: data.expires_at,
+      expires_in: data.expires_in,
+      token_type: data.token_type,
+      user: data.user,
+    };
+    saveSession(session);
+    return { user: data.user, session };
+  }
+
+  async function signOut() {
+    const session = readSession();
+    saveSession(null);
+    if (session && session.access_token) {
+      try {
+        await fetch(SUPABASE_URL + "/auth/v1/logout", {
+          method: "POST",
+          headers: authHeaders({ Authorization: "Bearer " + session.access_token }),
+        });
+      } catch (_) {}
+    }
+  }
+
+  async function requireSessionOrRedirect(nextPage) {
+    const session = await getSession();
+    if (!session || !session.user) {
+      const next = nextPage || "player.html";
+      location.replace("login.html?next=" + encodeURIComponent(next));
+      return null;
+    }
+    return session.user;
+  }
+
+  async function routeAfterAuth() {
+    const user = await getUser();
+    if (!user) {
+      location.replace("login.html");
+      return;
+    }
+    location.replace("player.html");
+  }
+
+  window.PlayDelayAuth = {
+    getSession,
+    getUser,
+    signUp,
+    signIn,
+    signOut,
+    requireSessionOrRedirect,
+    routeAfterAuth,
+  };
+})();
+/**
+ * login.html — sign in / sign up via PlayDelayAuth; then player.html (free).
+ */
+(() => {
+  const auth = window.PlayDelayAuth;
+  if (!auth) {
+    console.error("PlayDelayAuth missing");
+    return;
+  }
+
+  const params = new URLSearchParams(location.search);
+  let next = params.get("next") || "player.html";
+  if (next === "login.html" || next.includes("://")) next = "player.html";
+
+  let mode = "signin";
+
+  const title = document.getElementById("login-title");
+  const note = document.getElementById("authNote");
+  const submitBtn = document.getElementById("submitBtn");
+  const tabSignIn = document.getElementById("tabSignIn");
+  const tabSignUp = document.getElementById("tabSignUp");
+  const password = document.getElementById("password");
+  const err = document.getElementById("loginError");
+  const info = document.getElementById("loginInfo");
+  const form = document.getElementById("authForm");
+
+  function setMode(m) {
+    mode = m;
+    const isUp = m === "signup";
+    title.textContent = isUp ? "Create account" : "Sign in";
+    note.textContent = isUp
+      ? "Create an account with email and password (min 6 characters), then open the player."
+      : "Use your email and password to open the player. Free while we test.";
+    submitBtn.textContent = isUp ? "Create account" : "Sign in";
+    password.autocomplete = isUp ? "new-password" : "current-password";
+    tabSignIn.classList.toggle("is-active", !isUp);
+    tabSignUp.classList.toggle("is-active", isUp);
+    tabSignIn.setAttribute("aria-selected", String(!isUp));
+    tabSignUp.setAttribute("aria-selected", String(isUp));
+    err.hidden = true;
+    info.hidden = true;
+  }
+
+  tabSignIn.addEventListener("click", () => setMode("signin"));
+  tabSignUp.addEventListener("click", () => setMode("signup"));
+
+  auth
+    .getUser()
+    .then((user) => {
+      if (!user) return;
+      location.replace(next);
+    })
+    .catch(() => {});
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    err.hidden = true;
+    info.hidden = true;
+    const email = document.getElementById("email").value.trim();
+    const pw = password.value;
+    if (!email || !email.includes("@")) {
+      err.textContent = "Enter a valid email.";
+      err.hidden = false;
+      return;
+    }
+    if (!pw || pw.length < 6) {
+      err.textContent = "Password must be at least 6 characters.";
+      err.hidden = false;
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = mode === "signup" ? "Creating…" : "Signing in…";
+
+    try {
+      if (mode === "signup") {
+        const data = await auth.signUp(email, pw);
+        if (!data.session) {
+          info.textContent =
+            "Account created. If email confirmation is enabled, check your inbox, then sign in.";
+          info.hidden = false;
+          setMode("signin");
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Sign in";
+          return;
+        }
+      } else {
+        await auth.signIn(email, pw);
+      }
+      location.replace(next);
+    } catch (ex) {
+      err.textContent = (ex && ex.message) || "Something went wrong. Try again.";
+      err.hidden = false;
+      submitBtn.disabled = false;
+      submitBtn.textContent = mode === "signup" ? "Create account" : "Sign in";
+    }
+  });
+})();
