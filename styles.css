@@ -1953,3 +1953,223 @@ body.landing .free-weekend-banner {
     padding: 8px 10px;
   }
 }
+
+/* ——— Support chat widget (Neuralink-friendly / huge taps) ——— */
+
+.pd-support-root {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+}
+
+.pd-support-root > * {
+  pointer-events: auto;
+}
+
+.pd-support-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: rgba(4, 10, 20, 0.55);
+  cursor: pointer;
+}
+
+.pd-support-fab {
+  position: absolute;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  min-width: 72px;
+  min-height: 64px;
+  padding: 14px 22px;
+  border-radius: 999px;
+  border: 2px solid rgba(240, 193, 75, 0.65);
+  background: var(--navy);
+  color: var(--warn);
+  font-family: inherit;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pd-support-fab:hover,
+.pd-support-fab:focus-visible {
+  background: var(--navy-bright);
+  color: #ffe08a;
+  outline: 3px solid var(--accent-soft);
+  outline-offset: 3px;
+}
+
+.pd-support-root.is-open .pd-support-fab {
+  opacity: 0.92;
+}
+
+.pd-support-panel {
+  position: absolute;
+  right: max(12px, env(safe-area-inset-right));
+  bottom: max(92px, calc(env(safe-area-inset-bottom) + 80px));
+  left: max(12px, env(safe-area-inset-left));
+  width: min(420px, calc(100% - 24px));
+  max-height: min(78vh, 640px);
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 16px 18px;
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--warn) 40%, var(--border));
+  background: rgba(10, 22, 40, 0.97);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pd-support-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pd-support-title {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--white);
+}
+
+.pd-support-close {
+  min-width: 56px;
+  min-height: 56px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--bg-button);
+  color: var(--white);
+  font-family: inherit;
+  font-size: 1.75rem;
+  line-height: 1;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.pd-support-close:hover,
+.pd-support-close:focus-visible {
+  background: var(--bg-button-hover);
+  outline: 3px solid var(--accent-soft);
+  outline-offset: 2px;
+}
+
+.pd-support-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pd-support-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0 8px;
+}
+
+.pd-support-chip {
+  min-height: 48px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--accent-soft);
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 650;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.pd-support-chip:hover,
+.pd-support-chip.is-active {
+  border-color: rgba(240, 193, 75, 0.55);
+  background: rgba(240, 193, 75, 0.14);
+  color: var(--warn);
+}
+
+.pd-support-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pd-support-textarea {
+  min-height: 120px;
+  resize: vertical;
+  line-height: 1.4;
+}
+
+.pd-support-error {
+  margin: 8px 0 0;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(240, 113, 120, 0.14);
+  border: 2px solid rgba(240, 113, 120, 0.55);
+  color: #ffb4b8;
+  font-size: 1.1rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.pd-support-actions {
+  margin-top: 12px;
+}
+
+.pd-support-send {
+  width: 100%;
+  min-height: 64px;
+  font-size: 1.2rem;
+}
+
+.pd-support-success {
+  padding: 18px 8px 8px;
+  text-align: center;
+}
+
+.pd-support-success p {
+  margin: 0 0 12px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--live);
+  line-height: 1.4;
+}
+
+.pd-support-success-mail {
+  font-size: 1.05rem !important;
+  font-weight: 600 !important;
+  color: var(--accent-soft) !important;
+}
+
+.pd-support-success-mail a {
+  color: var(--warn);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+/* Keep Help clear of Play / mute on small player screens */
+@media (max-width: 520px) {
+  .player-app ~ .pd-support-root .pd-support-fab,
+  body:has(.player-app) .pd-support-fab {
+    bottom: max(12px, env(safe-area-inset-bottom));
+    right: max(12px, env(safe-area-inset-right));
+    min-height: 60px;
+  }
+
+  .player-app ~ .pd-support-root .pd-support-panel,
+  body:has(.player-app) .pd-support-panel {
+    bottom: max(84px, calc(env(safe-area-inset-bottom) + 72px));
+    max-height: min(70vh, 560px);
+  }
+}
