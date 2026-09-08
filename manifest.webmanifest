@@ -1,7 +1,7 @@
 {
   "name": "PlayDelay",
   "short_name": "PlayDelay",
-  "description": "PlayDelay — BYU, Utah, ASU & USC schedules; radio sync for BYU & Utah.",
+  "description": "PlayDelay — BYU, Utah, ASU & USC schedules; radio sync for all four teams.",
   "start_url": "./player.html",
   "display": "standalone",
   "background_color": "#0a1628",

@@ -1,6 +1,6 @@
 # PlayDelay (BYU, Utah, ASU & USC)
 
-Landing + delay player for **BYU (KSL)**, **Utah (ESPN 700)**, plus **ASU** & **USC** schedules. Radio streams live for BYU & Utah; ASU/USC radio coming soon. **Free for now:** create a Supabase account, sign in, pick a team, then play.
+Landing + delay player for **BYU (KSL)**, **Utah (ESPN 700)**, **ASU (Arizona Sports 98.7)**, and **USC (ESPN LA 710)**. Radio streams live for all four teams. **Free for now:** create a Supabase account, sign in, pick a team, then play.
 
 - Live (GitHub Pages): https://alscyborg.github.io/playdelay/
 - Custom domain: https://playdelay.app/
@@ -9,7 +9,7 @@ Landing + delay player for **BYU (KSL)**, **Utah (ESPN 700)**, plus **ASU** & **
 
 1. Open the site → **Sign in / Sign up** (`login.html`)
 2. Create an account with email + password (min 6 characters), or sign in
-3. You’re sent to **`player.html`** — tap **BYU / Utah / ASU / USC**, then Play when a stream is available (no payment gate right now)
+3. You’re sent to **`player.html`** — tap **BYU / Utah / ASU / USC**, then Play (no payment gate right now)
 
 ## Auth
 
@@ -38,3 +38,5 @@ python3 -m http.server 8765
 
 - Stripe / paid unlock is **not** required in this build (may return later).
 - Do not put service-role or Stripe secret keys in this repo.
+- ASU (KMVP): game-day geo blackouts may apply outside Phoenix; the continuous mount may still work.
+- USC (KSPN): Amperwave redirects with session tokens — keep the stable `live.amperwave.net/direct/...` URL only.

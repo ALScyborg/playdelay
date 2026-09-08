@@ -27,20 +27,22 @@
     asu: {
       id: "asu",
       label: "ASU",
-      station: "Radio coming soon",
-      streamUrl: null,
+      station: "Arizona Sports 98.7",
+      // Bonneville KMVP-FM continuous mount. Game-day geo blackouts possible outside Phoenix.
+      streamUrl: "https://bonneville.cdnstream1.com/2699_48.aac",
       accent: "maroon",
-      title: "ASU — PlayDelay",
-      shortTitle: "ASU",
+      title: "ASU · Arizona Sports 98.7 — PlayDelay",
+      shortTitle: "ASU Radio",
     },
     usc: {
       id: "usc",
       label: "USC",
-      station: "Radio coming soon",
-      streamUrl: null,
+      station: "ESPN LA 710",
+      // Amperwave session redirects — use the stable live.amperwave.net/direct/ URL only.
+      streamUrl: "https://live.amperwave.net/direct/goodkarma-kspnamaac-ibc",
       accent: "cardinal",
-      title: "USC — PlayDelay",
-      shortTitle: "USC",
+      title: "USC · ESPN LA 710 — PlayDelay",
+      shortTitle: "USC Radio",
     },
   };
 
