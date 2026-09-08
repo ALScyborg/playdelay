@@ -32,7 +32,7 @@ python3 -m http.server 8765
 ## Schedule
 
 - Client-side fetch from ESPN public team schedule JSON (BYU 252, Utah 254, ASU 9, USC 30).
-- Times displayed in America/Phoenix (PT).
+- Times displayed in the user's local timezone.
 
 ## Notes
 

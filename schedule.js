@@ -1,13 +1,11 @@
 /**
  * PlayDelay — ESPN college-football schedules (client-side, no API key).
- * Times shown in America/Phoenix for Brad.
+ * Times shown in the user's local timezone (browser default).
  */
 (() => {
   "use strict";
 
   const SEASON = 2026;
-  const TZ = "America/Phoenix";
-  const TZ_LABEL = "PT";
 
   const TEAM_META = {
     byu: {
@@ -72,7 +70,6 @@
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return { dateLine: "Date TBA", timeLine: "" };
     const dateLine = new Intl.DateTimeFormat("en-US", {
-      timeZone: TZ,
       weekday: "short",
       month: "short",
       day: "numeric",
@@ -80,14 +77,11 @@
     if (timeValid === false) {
       return { dateLine, timeLine: "Time TBD" };
     }
-    const timeLine =
-      new Intl.DateTimeFormat("en-US", {
-        timeZone: TZ,
-        hour: "numeric",
-        minute: "2-digit",
-      }).format(d) +
-      " " +
-      TZ_LABEL;
+    const timeLine = new Intl.DateTimeFormat("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      timeZoneName: "short",
+    }).format(d);
     return { dateLine, timeLine };
   }
 
