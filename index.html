@@ -16,10 +16,10 @@
   <link rel="icon" href="assets/favicon-32.png" type="image/png" sizes="32x32" />
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
   <title>PlayDelay — Sync radio to TV for BYU, Utah, ASU &amp; USC</title>
-  <meta name="description" content="Sync college football radio to your TV. Dial delay for BYU, Utah, ASU &amp; USC live radio (KSL, ESPN 700, Arizona Sports 98.7, ESPN LA 710) plus 2026 schedules." />
+  <meta name="description" content="Sync college football &amp; basketball radio to your TV. Dial delay for BYU, Utah, ASU &amp; USC live radio (KSL, ESPN 700, Arizona Sports 98.7, ESPN LA 710) plus football and men’s basketball schedules." />
   <link rel="canonical" href="https://playdelay.app/" />
   <meta property="og:title" content="PlayDelay — Sync radio to TV for BYU, Utah, ASU &amp; USC" />
-  <meta property="og:description" content="Sync college football radio to your TV. Dial delay for BYU, Utah, ASU &amp; USC live radio plus schedules." />
+  <meta property="og:description" content="Sync college football &amp; basketball radio to your TV. Dial delay for BYU, Utah, ASU &amp; USC live radio plus schedules." />
   <meta property="og:url" content="https://playdelay.app/" />
   <meta property="og:type" content="website" />
   <meta property="og:image" content="https://playdelay.app/assets/og-image.png" />
@@ -27,7 +27,7 @@
   <meta property="og:image:height" content="630" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="PlayDelay — Sync radio to TV for BYU, Utah, ASU &amp; USC" />
-  <meta name="twitter:description" content="Sync college football radio to your TV. Dial delay for BYU, Utah, ASU &amp; USC live radio plus schedules." />
+  <meta name="twitter:description" content="Sync college football &amp; basketball radio to your TV. Dial delay for BYU, Utah, ASU &amp; USC live radio plus schedules." />
   <meta name="twitter:image" content="https://playdelay.app/assets/og-image.png" />
   <meta name="google-site-verification" content="noxufBd_f9ALm4eSOAFZV-xJT1zgJV4WtEppzp7fz1U" />
   <script type="application/ld+json">
@@ -36,7 +36,7 @@
     "@type": "WebApplication",
     "name": "PlayDelay",
     "url": "https://playdelay.app/",
-    "description": "Sync college football radio to your TV with adjustable delay for BYU, Utah, ASU, and USC.",
+    "description": "Sync college football and men’s basketball radio to your TV with adjustable delay for BYU, Utah, ASU, and USC.",
     "applicationCategory": "SportsApplication",
     "operatingSystem": "Web",
     "offers": {
@@ -69,7 +69,7 @@
       <section class="hero" aria-labelledby="hero-title">
         <p class="hero-kicker">BYU · Utah · ASU · USC</p>
         <h2 id="hero-title" class="hero-title">Hear the game in sync with your TV</h2>
-        <p class="hero-seo">Radio delay sync for college football — mute the TV, play the call, dial until they match.</p>
+        <p class="hero-seo">Radio delay sync for college football &amp; men’s basketball — mute the TV, play the call, dial until they match.</p>
         <p class="hero-lead">
           Mute the broadcast, play the radio call on your phone, and dial a delay
           until the whistle and the picture line up. Built for one-handed use —
@@ -155,8 +155,9 @@
 
 
       <section class="landing-schedule" aria-labelledby="sched-section-title">
-        <h2 id="sched-section-title" class="section-title">2026 schedules</h2>
-        <p class="landing-sched-note">Times in your local timezone. Tap a team name to set colors (saved for next visit). Schedule via ESPN.</p>
+        <h2 id="sched-section-title" class="section-title">Football schedules</h2>
+        <div id="landingSportToggle" class="sport-toggle sport-toggle-landing" role="group" aria-label="Sport" data-active="football"></div>
+        <p class="landing-sched-note">2026 football via ESPN. Times in your local timezone. Tap a team name to set colors (saved for next visit).</p>
         <div class="landing-sched-grid">
           <div id="landingSchedByu" class="landing-sched-card" data-team="byu" aria-label="BYU schedule"></div>
           <div id="landingSchedUtah" class="landing-sched-card" data-team="utah" aria-label="Utah schedule"></div>
@@ -168,9 +169,10 @@
       <section class="focus-note" aria-label="Scope">
         <p>
           PlayDelay covers <strong>BYU</strong>, <strong>Utah</strong>, <strong>ASU</strong>, and
-          <strong>USC</strong> schedules (via ESPN). Radio sync is live for
+          <strong>USC</strong> football &amp; men’s basketball schedules (via ESPN). Radio sync is live for
           <strong>BYU · KSL NewsRadio</strong>, <strong>Utah · ESPN 700 KALL</strong>,
-          <strong>ASU · Arizona Sports 98.7</strong>, and <strong>USC · ESPN LA 710</strong>.
+          <strong>ASU · Arizona Sports 98.7</strong>, and <strong>USC · ESPN LA 710</strong>
+          (flagship streams for football and basketball game days).
           Create a free account, sign in, then open the player.
         </p>
       </section>

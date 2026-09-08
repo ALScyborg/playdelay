@@ -17,6 +17,7 @@ Landing + delay player for **BYU (KSL)**, **Utah (ESPN 700)**, **ASU (Arizona Sp
 - Frontend uses the public anon key only (see `supabase-auth.js`)
 - Session stored in `localStorage` (`playdelay.supabase.session`)
 - Last team stored in `localStorage` (`playdelay.lastTeam`)
+- Last sport stored in `localStorage` (`playdelay.lastSport`: `football` | `mbb`)
 - Auth is email/password via Supabase Auth HTTP API (no PIN)
 
 ## Local
@@ -32,7 +33,10 @@ python3 -m http.server 8765
 ## Schedule
 
 - Client-side fetch from ESPN public team schedule JSON (BYU 252, Utah 254, ASU 9, USC 30).
+- Sports: college football (`season=2026`) and men’s college basketball (`season=2026` → 2025-26).
+- Huge Football | Basketball toggle on the player schedule panel and landing schedules; preference in `playdelay.lastSport`.
 - Times displayed in the user's local timezone.
+- Basketball uses the same flagship radio streams as football for now.
 
 ## Notes
 

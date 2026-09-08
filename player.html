@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="PlayDelay" />
   <title>PlayDelay Player — Radio delay sync for BYU, Utah, ASU &amp; USC</title>
-  <meta name="description" content="Open the PlayDelay player: pick BYU, Utah, ASU, or USC, play live radio, and dial audio delay until the call matches your TV." />
+  <meta name="description" content="Open the PlayDelay player: pick BYU, Utah, ASU, or USC football or basketball schedules, play live radio, and dial audio delay until the call matches your TV." />
   <link rel="canonical" href="https://playdelay.app/player.html" />
   <meta property="og:title" content="PlayDelay Player — Radio delay sync" />
   <meta property="og:description" content="Pick BYU, Utah, ASU, or USC, play live radio, and dial delay until the call matches your TV." />
@@ -103,12 +103,14 @@
 
 
       <section class="schedule-panel" id="schedulePanel" aria-label="Team schedule">
+        <div id="sportToggle" class="sport-toggle" role="group" aria-label="Sport" data-active="football"></div>
         <div class="schedule-panel-head">
-          <h2 id="scheduleTitle" class="sched-panel-title">BYU schedule</h2>
+          <h2 id="scheduleTitle" class="sched-panel-title">BYU football schedule</h2>
           <p id="scheduleAttr" class="sched-attr">
             Schedule via <a href="https://www.espn.com/college-football/team/schedule/_/id/252" target="_blank" rel="noopener noreferrer">ESPN</a>
           </p>
         </div>
+        <div id="scheduleSportNoteHost"></div>
         <div id="scheduleStatus" class="sched-status" hidden></div>
         <div id="scheduleUpcoming"></div>
         <div id="scheduleRecent"></div>
