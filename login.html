@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a1628" />
+  <meta name="description" content="Enter your email to use PlayDelay." />
+  <link rel="stylesheet" href="styles.css" />
+  <title>Continue — PlayDelay</title>
+</head>
+<body class="landing">
+  <div class="landing-shell login-shell">
+    <header class="landing-header">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">PD</span>
+        <div class="brand-text">
+          <h1>PlayDelay</h1>
+          <p class="subtitle">Email to continue</p>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="login-card" aria-labelledby="login-title">
+        <h2 id="login-title" class="section-title">Enter your email</h2>
+        <p class="login-demo-note">
+          We save it on this device so we know who’s testing. No password.
+        </p>
+
+        <form id="loginForm" class="login-form" novalidate>
+          <label class="field">
+            <span class="field-label">Email</span>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autocomplete="email"
+              inputmode="email"
+              required
+              placeholder="you@example.com"
+            />
+          </label>
+
+          <p id="loginError" class="login-error" role="alert" hidden></p>
+
+          <div class="login-actions">
+            <button type="submit" class="btn btn-cta" id="continueBtn">
+              Continue to player
+            </button>
+          </div>
+        </form>
+      </section>
+    </main>
+
+    <footer class="landing-footer">
+      <p><a href="index.html">Back to home</a></p>
+    </footer>
+  </div>
+
+  <script src="auth-gate.js"></script>
+  <script>
+    (() => {
+      const gate = window.PlayDelayGate;
+      const params = new URLSearchParams(location.search);
+      let next = params.get("next") || "player.html";
+      if (next === "login.html" || next.includes("://")) next = "player.html";
+
+      if (gate.getSession()) {
+        location.replace(next);
+        return;
+      }
+
+      const form = document.getElementById("loginForm");
+      const err = document.getElementById("loginError");
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        err.hidden = true;
+        const email = document.getElementById("email").value.trim();
+        if (!email || !email.includes("@") || !email.includes(".")) {
+          err.textContent = "Enter a valid email.";
+          err.hidden = false;
+          return;
+        }
+        gate.setSession(email);
+        location.replace(next);
+      });
+    })();
+  </script>
+</body>
+</html>
