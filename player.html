@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="BYU Radio" />
-  <meta name="description" content="PlayDelay BYU — sync KSL NewsRadio to your TV. Sign in with email + code 1234." />
+  <meta name="description" content="PlayDelay BYU — sync KSL NewsRadio to your TV. Huge buttons. No login." />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="stylesheet" href="styles.css" />
   <title>BYU Radio — PlayDelay</title>
@@ -27,10 +27,6 @@
         </div>
       </div>
       <div class="header-end">
-        <div class="session-chip" id="sessionChip" hidden>
-          <span id="sessionEmail" class="session-email"></span>
-          <button type="button" class="btn btn-auth" id="signOutBtn">Sign out</button>
-        </div>
         <div id="statusChip" class="status-chip status-idle" role="status" aria-live="polite">Idle</div>
       </div>
     </header>
@@ -86,33 +82,6 @@
     <!-- Hidden audio element; MediaElementSource when delay engine works -->
     <audio id="audio" preload="none" playsinline></audio>
   </div>
-
-  <script src="auth-gate.js"></script>
-  <script>
-    if (!window.PlayDelayGate.requireSessionOrRedirect()) {
-      /* redirecting */
-    }
-  </script>
   <script src="app.js" defer></script>
-  <script>
-    (function () {
-      var gate = window.PlayDelayGate;
-      if (!gate || !gate.getSession()) return;
-      var s = gate.getSession();
-      var chip = document.getElementById("sessionChip");
-      var emailEl = document.getElementById("sessionEmail");
-      var outBtn = document.getElementById("signOutBtn");
-      if (chip && emailEl) {
-        emailEl.textContent = s.email;
-        chip.hidden = false;
-      }
-      if (outBtn) {
-        outBtn.addEventListener("click", function () {
-          gate.clearSession();
-          location.replace("login.html?next=player.html");
-        });
-      }
-    })();
-  </script>
 </body>
 </html>
