@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 360" role="img" aria-labelledby="heroTitle heroDesc">
+  <title id="heroTitle">Radio and TV sync</title>
+  <desc id="heroDesc">Illustration of a TV and phone radio dial synced with a delay slider</desc>
+  <defs>
+    <linearGradient id="bgGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b4a8a" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#002e5d" stop-opacity="0.15"/>
+    </linearGradient>
+    <linearGradient id="goldLine" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f0c14b" stop-opacity="0.2"/>
+      <stop offset="50%" stop-color="#f0c14b"/>
+      <stop offset="100%" stop-color="#f0c14b" stop-opacity="0.2"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="360" rx="28" fill="url(#bgGlow)"/>
+  <circle cx="520" cy="70" r="90" fill="#0b4a8a" opacity="0.25"/>
+  <circle cx="80" cy="300" r="70" fill="#002e5d" opacity="0.45"/>
+
+  <!-- TV -->
+  <g transform="translate(72,78)">
+    <rect x="0" y="0" width="220" height="148" rx="14" fill="#122038" stroke="#f5f7fa" stroke-width="3"/>
+    <rect x="14" y="14" width="192" height="100" rx="8" fill="#002e5d"/>
+    <rect x="34" y="34" width="72" height="48" rx="6" fill="#0b4a8a"/>
+    <circle cx="170" cy="58" r="18" fill="none" stroke="#f0c14b" stroke-width="3"/>
+    <path d="M162 58h16M170 50v16" stroke="#f0c14b" stroke-width="2.5" stroke-linecap="round"/>
+    <rect x="70" y="148" width="80" height="10" rx="3" fill="#9aabc2" opacity="0.7"/>
+    <rect x="40" y="158" width="140" height="8" rx="3" fill="#1a2f4d"/>
+  </g>
+
+  <!-- Sync arc / delay dial -->
+  <g transform="translate(300,150)">
+    <path d="M0 40 C40 0, 80 0, 120 40" fill="none" stroke="url(#goldLine)" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="60" cy="18" r="8" fill="#f0c14b"/>
+    <text x="60" y="58" text-anchor="middle" fill="#c8d6e8" font-family="system-ui,sans-serif" font-size="13" font-weight="700">DELAY</text>
+  </g>
+
+  <!-- Phone / radio -->
+  <g transform="translate(400,70)">
+    <rect x="0" y="0" width="140" height="220" rx="22" fill="#122038" stroke="#f5f7fa" stroke-width="3"/>
+    <rect x="14" y="28" width="112" height="150" rx="10" fill="#002e5d"/>
+    <circle cx="70" cy="90" r="36" fill="#0a1628" stroke="#f0c14b" stroke-width="3"/>
+    <circle cx="70" cy="90" r="8" fill="#f0c14b"/>
+    <path d="M70 62v-8M70 126v8M42 90h-8M106 90h8" stroke="#c8d6e8" stroke-width="2.5" stroke-linecap="round"/>
+    <rect x="48" y="196" width="44" height="6" rx="3" fill="#9aabc2" opacity="0.8"/>
+  </g>
+
+  <!-- Sound waves -->
+  <g stroke="#c8d6e8" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.85">
+    <path d="M268 210c12-10 12-30 0-40"/>
+    <path d="M282 218c20-16 20-48 0-64"/>
+  </g>
+</svg>

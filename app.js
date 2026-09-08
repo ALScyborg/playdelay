@@ -132,6 +132,25 @@
     delayNode.port.postMessage({ type: "setDelay", seconds });
   }
 
+  function rememberDelayPreference(seconds) {
+    const auth = window.PlayDelayAuth;
+    if (!auth) return;
+    const session = auth.getSession();
+    if (!session) return;
+    auth.setPrefs(session.email, { lastDelay: seconds });
+  }
+
+  function restoreDelayPreference() {
+    const auth = window.PlayDelayAuth;
+    if (!auth) return;
+    const session = auth.getSession();
+    if (!session) return;
+    const prefs = auth.getPrefs(session.email);
+    if (typeof prefs.lastDelay === "number" && prefs.lastDelay >= 0) {
+      setDelay(prefs.lastDelay, { fromUser: false });
+    }
+  }
+
   function setDelay(seconds, { fromUser = true } = {}) {
     const next = Math.max(0, Math.min(MAX_DELAY, seconds));
 
@@ -154,6 +173,7 @@
     if (!usingWorklet) displayDelay = next;
     if (usingWorklet) sendDelayToWorklet(next);
     updateDelayUI();
+    if (fromUser) rememberDelayPreference(next);
   }
 
   async function teardownGraph() {
@@ -415,4 +435,8 @@
   setStatus("idle", "Idle");
   updateDelayUI();
   applyVolume();
+  restoreDelayPreference();
+  window.addEventListener("playdelay:authchange", () => {
+    restoreDelayPreference();
+  });
 })();

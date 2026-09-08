@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0a1628" />
-  <meta name="description" content="PlayDelay — hear KSL NewsRadio in sync with your TV for BYU games. No login." />
+  <meta name="description" content="PlayDelay — hear KSL NewsRadio in sync with your TV for BYU games. Optional demo login; player works signed out." />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="stylesheet" href="styles.css" />
   <title>PlayDelay — Hear the game in sync</title>
@@ -19,7 +19,10 @@
           <p class="subtitle">Radio ↔ TV sync for BYU</p>
         </div>
       </div>
-      <a class="nav-link" href="player.html">Open player</a>
+      <div class="header-actions">
+        <div id="authSlot" class="auth-slot"></div>
+        <a class="nav-link" href="player.html">Open player</a>
+      </div>
     </header>
 
     <main>
@@ -29,33 +32,41 @@
         <p class="hero-lead">
           Mute the broadcast, play the radio call on your phone, and dial a delay
           until the whistle and the picture line up. Built for one-handed use —
-          huge buttons, no account.
+          huge buttons. Sign-in is optional.
         </p>
+        <figure class="hero-art">
+          <img
+            src="assets/hero-sync.svg"
+            width="640"
+            height="360"
+            alt="Illustration of a TV and phone radio synced with a delay dial"
+          />
+        </figure>
         <div class="hero-actions">
           <a class="btn btn-cta" href="player.html">Open BYU player</a>
         </div>
-        <p class="hero-note">No login · BYU / KSL focus · works in the browser</p>
+        <p class="hero-note">No login required · BYU / KSL focus · works in the browser</p>
       </section>
 
       <section class="how" aria-labelledby="how-title">
         <h2 id="how-title" class="section-title">How it works</h2>
         <ol class="steps-list">
           <li class="step-card">
-            <span class="step-num" aria-hidden="true">1</span>
+            <img class="step-icon" src="assets/icon-tv.svg" width="48" height="48" alt="" />
             <div>
               <h3>Watch on TV</h3>
               <p>Put the game on your television and mute the TV audio.</p>
             </div>
           </li>
           <li class="step-card">
-            <span class="step-num" aria-hidden="true">2</span>
+            <img class="step-icon" src="assets/icon-radio.svg" width="48" height="48" alt="" />
             <div>
               <h3>Play KSL</h3>
               <p>Open the BYU player and tap Play to start KSL NewsRadio.</p>
             </div>
           </li>
           <li class="step-card">
-            <span class="step-num" aria-hidden="true">3</span>
+            <img class="step-icon" src="assets/icon-delay.svg" width="48" height="48" alt="" />
             <div>
               <h3>Dial the delay</h3>
               <p>Use presets or ± nudges until the radio matches what you see.</p>
@@ -67,8 +78,8 @@
       <section class="focus-note" aria-label="Scope">
         <p>
           PlayDelay here is intentionally narrow: <strong>BYU games</strong> on
-          <strong>KSL NewsRadio</strong>. No other stations, no accounts, no ads —
-          just sync.
+          <strong>KSL NewsRadio</strong>. Optional demo accounts save a delay
+          preference — the player never requires sign-in.
         </p>
       </section>
     </main>
@@ -80,5 +91,6 @@
       </p>
     </footer>
   </div>
+  <script src="auth.js" defer></script>
 </body>
 </html>

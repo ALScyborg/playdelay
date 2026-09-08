@@ -7,13 +7,17 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="BYU Radio" />
-  <meta name="description" content="PlayDelay BYU — sync KSL NewsRadio to your TV. Huge buttons, no login." />
+  <meta name="description" content="PlayDelay BYU — sync KSL NewsRadio to your TV. Huge buttons; optional demo login does not block Play." />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="stylesheet" href="styles.css" />
   <title>BYU Radio — PlayDelay</title>
 </head>
 <body>
-  <div class="app">
+  <div class="app player-app">
+    <div class="player-accent" aria-hidden="true">
+      <img src="assets/player-accent.svg" alt="" width="520" height="200" />
+    </div>
+
     <header class="header">
       <div class="brand">
         <a class="brand-mark brand-mark-link" href="index.html" aria-label="PlayDelay home">BYU</a>
@@ -22,7 +26,10 @@
           <p class="subtitle">PlayDelay · radio ↔ TV sync</p>
         </div>
       </div>
-      <div id="statusChip" class="status-chip status-idle" role="status" aria-live="polite">Idle</div>
+      <div class="header-end">
+        <div id="authSlot" class="auth-slot"></div>
+        <div id="statusChip" class="status-chip status-idle" role="status" aria-live="polite">Idle</div>
+      </div>
     </header>
 
     <div id="banner" class="banner" hidden role="alert" aria-live="assertive"></div>
@@ -77,6 +84,7 @@
     <audio id="audio" preload="none" playsinline></audio>
   </div>
 
+  <script src="auth.js" defer></script>
   <script src="app.js" defer></script>
 </body>
 </html>
