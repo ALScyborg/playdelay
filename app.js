@@ -5,46 +5,13 @@
 (() => {
   "use strict";
 
-  const TEAMS = {
-    byu: {
-      id: "byu",
-      label: "BYU",
-      station: "KSL NewsRadio",
-      streamUrl: "https://bonneville.cdnstream1.com/2704_48.aac",
-      accent: "navy",
-      title: "BYU · KSL — PlayDelay",
-      shortTitle: "BYU Radio",
-    },
-    utah: {
-      id: "utah",
-      label: "Utah",
-      station: "ESPN 700 KALL",
-      streamUrl: "https://ais-sa1.streamon.fm/7349_48k.aac",
-      accent: "crimson",
-      title: "Utah · ESPN 700 — PlayDelay",
-      shortTitle: "Utah Radio",
-    },
-    asu: {
-      id: "asu",
-      label: "ASU",
-      station: "Arizona Sports 98.7",
-      // Bonneville KMVP-FM continuous mount. Game-day geo blackouts possible outside Phoenix.
-      streamUrl: "https://bonneville.cdnstream1.com/2699_48.aac",
-      accent: "maroon",
-      title: "ASU · Arizona Sports 98.7 — PlayDelay",
-      shortTitle: "ASU Radio",
-    },
-    usc: {
-      id: "usc",
-      label: "USC",
-      station: "ESPN LA 710",
-      // Amperwave session redirects — use the stable live.amperwave.net/direct/ URL only.
-      streamUrl: "https://live.amperwave.net/direct/goodkarma-kspnamaac-ibc",
-      accent: "cardinal",
-      title: "USC · ESPN LA 710 — PlayDelay",
-      shortTitle: "USC Radio",
-    },
-  };
+  const registry = window.PlayDelayTeams;
+  if (!registry) {
+    console.error("PlayDelayTeams missing — load teams.js first");
+  }
+  const TEAMS = (registry && registry.TEAMS) || {};
+  const LIVE_LABELS =
+    (registry && registry.LIVE_STREAM_LABELS) || ["BYU", "Utah", "ASU", "USC"];
 
   const TEAM_STORAGE_KEY = "playdelay.lastTeam";
   const WORKLET_URL = "./worklets/delay-processor.js";
@@ -60,7 +27,7 @@
   const brandMarkEl = document.getElementById("brandMark");
   const stationTitleEl = document.getElementById("stationTitle");
   const teamToggle = document.getElementById("teamToggle");
-  const teamButtons = Array.from(document.querySelectorAll("[data-team]"));
+  let teamButtons = [];
   const presetButtons = Array.from(document.querySelectorAll("[data-delay]"));
   const stepButtons = Array.from(document.querySelectorAll("[data-delta]"));
   const audioHost = document.getElementById("audio");
@@ -91,6 +58,9 @@
   let switchingTeam = false;
 
   function readStoredTeamId() {
+    if (registry && typeof registry.readStoredTeamId === "function") {
+      return registry.readStoredTeamId("byu");
+    }
     try {
       const raw = localStorage.getItem(TEAM_STORAGE_KEY);
       if (raw && TEAMS[raw]) return raw;
@@ -126,7 +96,9 @@
       setStatus("idle", "Soon");
       showBanner(
         currentTeam.label +
-          " radio stream coming soon. Schedule is below — pick BYU or Utah to listen now.",
+          " radio stream coming soon. Schedule is below — pick " +
+          LIVE_LABELS.join(", ") +
+          " to listen now.",
         false
       );
     } else {
@@ -147,26 +119,89 @@
 
 
   function persistTeam(id) {
+    if (registry && typeof registry.persistTeam === "function") {
+      registry.persistTeam(id);
+      return;
+    }
     try {
       localStorage.setItem(TEAM_STORAGE_KEY, id);
     } catch (_) {}
   }
 
+  function trackUsage(eventType, team) {
+    const u = window.PlayDelayUsage;
+    if (!u || typeof u.track !== "function") return;
+    const t = team || currentTeam;
+    u.track(eventType, {
+      team_id: t.id,
+      team_label: t.label,
+    });
+  }
+
+  function buildTeamPicker() {
+    if (!teamToggle) return;
+    const big12 = (registry && registry.BIG12_ORDER) || [];
+    const other = (registry && registry.OTHER_ORDER) || [];
+    const parts = [];
+    parts.push('<div class="team-picker-group" data-group="big12">');
+    parts.push('<div class="team-picker-label">Big 12</div>');
+    parts.push('<div class="team-picker-grid">');
+    for (const id of big12) {
+      const t = TEAMS[id];
+      if (!t) continue;
+      const live = t.streamUrl ? ' data-has-stream="1"' : ' data-has-stream="0"';
+      parts.push(
+        '<button type="button" class="btn btn-team" data-team="' +
+          id +
+          '"' +
+          live +
+          ' aria-pressed="false">' +
+          (t.shortLabel || t.label) +
+          "</button>"
+      );
+    }
+    parts.push("</div></div>");
+    parts.push('<div class="team-picker-group" data-group="other">');
+    parts.push('<div class="team-picker-label">Other</div>');
+    parts.push('<div class="team-picker-grid">');
+    for (const id of other) {
+      const t = TEAMS[id];
+      if (!t) continue;
+      const live = t.streamUrl ? ' data-has-stream="1"' : ' data-has-stream="0"';
+      parts.push(
+        '<button type="button" class="btn btn-team" data-team="' +
+          id +
+          '"' +
+          live +
+          ' aria-pressed="false">' +
+          (t.shortLabel || t.label) +
+          "</button>"
+      );
+    }
+    parts.push("</div></div>");
+    teamToggle.innerHTML = parts.join("");
+    // Refresh nodelist after rebuild
+    return Array.from(teamToggle.querySelectorAll("[data-team]"));
+  }
+
   function applyTeamBranding(team) {
     document.documentElement.dataset.team = team.id;
     document.body.dataset.team = team.id;
-    if (brandMarkEl) brandMarkEl.textContent = team.label;
-    if (stationTitleEl) stationTitleEl.textContent = team.station;
+    if (registry && typeof registry.applyThemeVars === "function") {
+      registry.applyThemeVars(team);
+    }
+    if (brandMarkEl) brandMarkEl.textContent = team.shortLabel || team.label;
+    if (stationTitleEl) {
+      stationTitleEl.textContent = team.streamUrl
+        ? team.station
+        : team.label + " · schedule";
+    }
     document.title = team.title;
     const themeMeta = document.querySelector('meta[name="theme-color"]');
     if (themeMeta) {
-      const themes = {
-        byu: "#0a1628",
-        utah: "#1a0508",
-        asu: "#1a0a12",
-        usc: "#1a0c0c",
-      };
-      themeMeta.setAttribute("content", themes[team.id] || "#0a1628");
+      const color =
+        (team.theme && team.theme.themeColor) || "#0a1628";
+      themeMeta.setAttribute("content", color);
     }
     teamButtons.forEach((btn) => {
       const active = btn.dataset.team === team.id;
@@ -175,6 +210,15 @@
     });
     if (teamToggle) {
       teamToggle.setAttribute("data-active", team.id);
+      // Keep active chip visible in scrollable picker
+      const activeBtn = teamToggle.querySelector(
+        '[data-team="' + team.id + '"]'
+      );
+      if (activeBtn && typeof activeBtn.scrollIntoView === "function") {
+        try {
+          activeBtn.scrollIntoView({ block: "nearest", inline: "nearest" });
+        } catch (_) {}
+      }
     }
   }
 
@@ -472,6 +516,7 @@
       playBtn.setAttribute("aria-pressed", "true");
       playBtn.textContent = "Pause";
       setStatus("live", "Live");
+      trackUsage("play", currentTeam);
       if (!usingWorklet) {
         targetDelay = 0;
         displayDelay = 0;
@@ -499,6 +544,7 @@
     playBtn.setAttribute("aria-pressed", "false");
     playBtn.textContent = "Play";
     setStatus("paused", "Paused");
+    trackUsage("stop", currentTeam);
   }
 
   async function togglePlay() {
@@ -531,6 +577,7 @@
       currentTeam = next;
       persistTeam(next.id);
       applyTeamBranding(next);
+      trackUsage("select", next);
       refreshSchedule();
       workletFailed = false;
       workletFailReason = "";
@@ -608,6 +655,7 @@
     );
   });
 
+  teamButtons = buildTeamPicker() || [];
   teamButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
       selectTeam(btn.dataset.team);
@@ -618,6 +666,8 @@
   applyTeamBranding(currentTeam);
   refreshSchedule();
   updateStreamAvailability();
+  // Initial select event for persisted team (schedule_view also from schedule.js)
+  trackUsage("select", currentTeam);
   // Initial element: prepare src without capturing yet
   audio.preload = "auto";
   if (hasStream()) audio.src = streamUrl();

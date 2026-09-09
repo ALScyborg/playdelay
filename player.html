@@ -10,17 +10,17 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="PlayDelay" />
-  <title>PlayDelay Player — Radio delay sync for BYU, Utah, ASU &amp; USC</title>
-  <meta name="description" content="Open the PlayDelay player: pick BYU, Utah, ASU, or USC football or basketball schedules, play live radio, and dial audio delay until the call matches your TV." />
+  <title>PlayDelay Player — Radio delay sync for Big 12, Miami &amp; USC</title>
+  <meta name="description" content="Open the PlayDelay player: pick any Big 12, Miami, or USC team, play live radio when available, and dial audio delay until the call matches your TV." />
   <link rel="canonical" href="https://playdelay.app/player.html" />
   <meta property="og:title" content="PlayDelay Player — Radio delay sync" />
-  <meta property="og:description" content="Pick BYU, Utah, ASU, or USC, play live radio, and dial delay until the call matches your TV." />
+  <meta property="og:description" content="Pick a Big 12 / Miami / USC team, play live radio when available, and dial delay until the call matches your TV." />
   <meta property="og:url" content="https://playdelay.app/player.html" />
   <meta property="og:type" content="website" />
   <meta property="og:image" content="https://playdelay.app/assets/og-image.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="PlayDelay Player — Radio delay sync" />
-  <meta name="twitter:description" content="Pick BYU, Utah, ASU, or USC, play live radio, and dial delay until the call matches your TV." />
+  <meta name="twitter:description" content="Pick a Big 12 / Miami / USC team, play live radio when available, and dial delay until the call matches your TV." />
   <meta name="twitter:image" content="https://playdelay.app/assets/og-image.png" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="stylesheet" href="styles.css" />
@@ -61,10 +61,7 @@
         aria-label="Team"
         data-active="byu"
       >
-        <button type="button" class="btn btn-team is-active" data-team="byu" aria-pressed="true">BYU</button>
-        <button type="button" class="btn btn-team" data-team="utah" aria-pressed="false">Utah</button>
-        <button type="button" class="btn btn-team" data-team="asu" aria-pressed="false">ASU</button>
-        <button type="button" class="btn btn-team" data-team="usc" aria-pressed="false">USC</button>
+        <!-- Filled by app.js from teams.js -->
       </section>
 
       <section class="delay-readout" aria-label="Current delay">
@@ -129,6 +126,8 @@
     <!-- Hidden audio element; MediaElementSource when delay engine works -->
     <audio id="audio" preload="none" playsinline></audio>
   </div>
+  <script src="teams.js"></script>
+  <script src="usage.js"></script>
   <script src="schedule.js"></script>
   <script src="player-boot.js"></script>
   <script src="support-chat.js"></script>

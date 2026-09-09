@@ -27,28 +27,41 @@
     },
   };
 
-  const TEAM_META = {
-    byu: {
-      id: "byu",
-      espnId: "252",
-      label: "BYU",
-    },
-    utah: {
-      id: "utah",
-      espnId: "254",
-      label: "Utah",
-    },
-    asu: {
-      id: "asu",
-      espnId: "9",
-      label: "ASU",
-    },
-    usc: {
-      id: "usc",
-      espnId: "30",
-      label: "USC",
-    },
-  };
+  const TEAM_META =
+    (window.PlayDelayTeams &&
+      typeof window.PlayDelayTeams.teamMetaMap === "function" &&
+      window.PlayDelayTeams.teamMetaMap()) ||
+    {
+      byu: { id: "byu", espnId: "252", label: "BYU", group: "big12" },
+      utah: { id: "utah", espnId: "254", label: "Utah", group: "big12" },
+      asu: { id: "asu", espnId: "9", label: "ASU", group: "big12" },
+      usc: { id: "usc", espnId: "30", label: "USC", group: "other" },
+    };
+
+  const TEAM_STORAGE_KEY = "playdelay.lastTeam";
+
+  function readLandingTeam() {
+    if (window.PlayDelayTeams && typeof window.PlayDelayTeams.readStoredTeamId === "function") {
+      return window.PlayDelayTeams.readStoredTeamId("byu");
+    }
+    try {
+      const raw = localStorage.getItem(TEAM_STORAGE_KEY);
+      if (raw && TEAM_META[raw]) return raw;
+    } catch (_) {}
+    return "byu";
+  }
+
+  function trackScheduleView(teamKey, sport) {
+    const u = window.PlayDelayUsage;
+    if (!u || typeof u.track !== "function") return;
+    const meta = TEAM_META[teamKey];
+    if (!meta) return;
+    u.track("schedule_view", {
+      team_id: meta.id,
+      team_label: meta.label,
+      sport: sport || readSport(),
+    });
+  }
 
   function readSport() {
     try {
@@ -372,6 +385,7 @@
       const { upcoming, recent } = await fetchSchedule(teamKey, sport);
       // Ignore stale responses if sport changed mid-fetch
       if (readSport() !== sport) return;
+      trackScheduleView(teamKey, sport);
       setStatus(statusEl, "", "");
       if (upEl) {
         const slice = upcoming.slice(0, 6);
@@ -400,14 +414,151 @@
   }
 
   /**
-   * Compact dual-team schedule on the landing page.
-   * Expects #landingSchedByu/Utah/Asu/Usc containers and optional #landingSportToggle.
+   * Landing: sport toggle + team chips, one schedule panel for selected team.
+   * Expects #landingTeamChips, #landingSchedPanel, optional #landingSportToggle.
    */
+  function buildLandingChips(activeId) {
+    const host = document.getElementById("landingTeamChips");
+    if (!host) return;
+    const registry = window.PlayDelayTeams;
+    const big12 = (registry && registry.BIG12_ORDER) || Object.keys(TEAM_META).filter((k) => TEAM_META[k].group !== "other");
+    const other = (registry && registry.OTHER_ORDER) || Object.keys(TEAM_META).filter((k) => TEAM_META[k].group === "other");
+    const parts = [];
+    parts.push('<div class="landing-chip-group">');
+    parts.push('<div class="landing-chip-label">Big 12</div>');
+    parts.push('<div class="landing-chip-grid">');
+    for (const id of big12) {
+      const meta = TEAM_META[id];
+      if (!meta) continue;
+      const active = id === activeId ? " is-active" : "";
+      const pressed = id === activeId ? "true" : "false";
+      parts.push(
+        '<button type="button" class="btn landing-team-chip' +
+          active +
+          '" data-team-pick="' +
+          escapeHtml(id) +
+          '" aria-pressed="' +
+          pressed +
+          '">' +
+          escapeHtml(meta.shortLabel || meta.label) +
+          "</button>"
+      );
+    }
+    parts.push("</div></div>");
+    parts.push('<div class="landing-chip-group">');
+    parts.push('<div class="landing-chip-label">Other</div>');
+    parts.push('<div class="landing-chip-grid">');
+    for (const id of other) {
+      const meta = TEAM_META[id];
+      if (!meta) continue;
+      const active = id === activeId ? " is-active" : "";
+      const pressed = id === activeId ? "true" : "false";
+      parts.push(
+        '<button type="button" class="btn landing-team-chip' +
+          active +
+          '" data-team-pick="' +
+          escapeHtml(id) +
+          '" aria-pressed="' +
+          pressed +
+          '">' +
+          escapeHtml(meta.shortLabel || meta.label) +
+          "</button>"
+      );
+    }
+    parts.push("</div></div>");
+    host.innerHTML = parts.join("");
+  }
+
+  function syncLandingChips(activeId) {
+    document.querySelectorAll("#landingTeamChips [data-team-pick]").forEach((btn) => {
+      const active = btn.getAttribute("data-team-pick") === activeId;
+      btn.classList.toggle("is-active", active);
+      btn.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+  }
+
+  async function renderLandingPanel(teamKey, sport) {
+    const el = document.getElementById("landingSchedPanel");
+    if (!el) return;
+    const meta = TEAM_META[teamKey] || TEAM_META.byu;
+    const pageUrl = schedulePageUrl(meta.espnId, sport);
+    el.dataset.team = meta.id;
+    el.setAttribute("aria-label", meta.label + " schedule");
+    el.innerHTML =
+      '<div class="landing-sched-toolbar">' +
+      '<div class="landing-sched-head is-active" aria-hidden="true">' +
+      '<span class="landing-sched-team-label">' +
+      escapeHtml(meta.label) +
+      "</span>" +
+      '<span class="landing-sched-pick-hint">' +
+      (meta.hasStream ? "Radio live" : "Schedule · radio soon") +
+      "</span>" +
+      "</div>" +
+      '<a class="sched-espn-link" href="' +
+      pageUrl +
+      '" target="_blank" rel="noopener noreferrer">ESPN</a>' +
+      "</div>" +
+      '<div class="sched-status sched-status-loading">Loading…</div>';
+    try {
+      const { upcoming, recent } = await fetchSchedule(meta.id, sport);
+      if (readSport() !== sport) return;
+      if (readLandingTeam() !== meta.id && document.body.dataset.team !== meta.id) {
+        // Selected team may have changed mid-fetch
+        const current = readLandingTeam();
+        if (current !== meta.id) return;
+      }
+      trackScheduleView(meta.id, sport);
+      const next = upcoming.slice(0, 6);
+      const last = recent.slice(0, 3);
+      const rows = [...last.reverse(), ...next];
+      el.innerHTML =
+        '<div class="landing-sched-toolbar">' +
+        '<div class="landing-sched-head is-active" aria-hidden="true">' +
+        '<span class="landing-sched-team-label">' +
+        escapeHtml(meta.label) +
+        "</span>" +
+        '<span class="landing-sched-pick-hint">' +
+        (meta.hasStream ? "Radio live" : "Schedule · radio soon") +
+        "</span>" +
+        "</div>" +
+        '<a class="sched-espn-link" href="' +
+        pageUrl +
+        '" target="_blank" rel="noopener noreferrer">ESPN</a>' +
+        "</div>" +
+        (rows.length
+          ? '<ul class="sched-list sched-list-compact" role="list">' +
+            rows.map(gameRowHtml).join("") +
+            "</ul>"
+          : '<p class="sched-empty">No games listed.</p>');
+    } catch (err) {
+      console.warn("Landing schedule failed", meta.id, err);
+      el.innerHTML =
+        '<div class="landing-sched-toolbar">' +
+        '<div class="landing-sched-head is-active" aria-hidden="true">' +
+        '<span class="landing-sched-team-label">' +
+        escapeHtml(meta.label) +
+        "</span>" +
+        '<span class="landing-sched-pick-hint">Tap a team above</span>' +
+        "</div>" +
+        '<a class="sched-espn-link" href="' +
+        pageUrl +
+        '" target="_blank" rel="noopener noreferrer">ESPN</a>' +
+        "</div>" +
+        '<div class="sched-status sched-status-error">Couldn’t load ESPN schedule</div>';
+    }
+  }
+
   async function mountLanding() {
     const sport = readSport();
     const toggleHost = document.getElementById("landingSportToggle");
     const sectionTitle = document.getElementById("sched-section-title");
     const sectionNote = document.querySelector(".landing-sched-note");
+    const chipsHost = document.getElementById("landingTeamChips");
+    const panel = document.getElementById("landingSchedPanel");
+
+    if (!chipsHost && !panel && !document.getElementById("landingSchedByu")) {
+      return;
+    }
 
     if (toggleHost && !toggleHost.dataset.wired) {
       toggleHost.innerHTML = sportToggleButtonsHtml(sport);
@@ -431,86 +582,51 @@
 
     if (sectionTitle) {
       sectionTitle.textContent =
-        sport === "mbb" ? "Men’s basketball schedules" : "Football schedules";
+        sport === "mbb" ? "Men’s basketball schedule" : "Football schedule";
     }
     if (sectionNote) {
       sectionNote.textContent =
         sport === "mbb"
-          ? "2025-26 men’s basketball via ESPN. Times in your local timezone. Tap a team name for colors. Radio sync uses each team’s flagship station when games are on."
-          : "2026 football via ESPN. Times in your local timezone. Tap a team name to set colors (saved for next visit).";
+          ? "2025-26 men’s basketball via ESPN. Pick a team for colors + schedule. Radio sync uses each team’s flagship station when available."
+          : "2026 football via ESPN. Pick a Big 12 / Miami / USC team for colors + schedule (saved for next visit).";
     }
 
-    const pairs = [
-      ["byu", document.getElementById("landingSchedByu")],
-      ["utah", document.getElementById("landingSchedUtah")],
-      ["asu", document.getElementById("landingSchedAsu")],
-      ["usc", document.getElementById("landingSchedUsc")],
-    ];
-    await Promise.all(
-      pairs.map(async ([key, el]) => {
-        if (!el) return;
-        const meta = TEAM_META[key];
-        const pageUrl = schedulePageUrl(meta.espnId, sport);
-        el.dataset.team = key;
-        el.innerHTML =
-          '<div class="sched-status sched-status-loading">Loading…</div>';
-        try {
-          const { upcoming, recent } = await fetchSchedule(key, sport);
-          if (readSport() !== sport) return;
-          const next = upcoming.slice(0, 3);
-          const last = recent.slice(0, 2);
-          const rows = [...last.reverse(), ...next];
-          el.dataset.team = key;
-          el.innerHTML =
-            '<div class="landing-sched-toolbar">' +
-            '<button type="button" class="landing-sched-head" data-team-pick="' +
-            escapeHtml(key) +
-            '" aria-pressed="false" aria-label="Use ' +
-            escapeHtml(meta.label) +
-            ' team colors">' +
-            '<span class="landing-sched-team-label">' +
-            escapeHtml(meta.label) +
-            "</span>" +
-            '<span class="landing-sched-pick-hint">Tap for colors</span>' +
-            "</button>" +
-            '<a class="sched-espn-link" href="' +
-            pageUrl +
-            '" target="_blank" rel="noopener noreferrer">ESPN</a>' +
-            "</div>" +
-            (rows.length
-              ? '<ul class="sched-list sched-list-compact" role="list">' +
-                rows.map(gameRowHtml).join("") +
-                "</ul>"
-              : '<p class="sched-empty">No games listed.</p>');
-        } catch (err) {
-          console.warn("Landing schedule failed", key, err);
-          el.dataset.team = key;
-          el.innerHTML =
-            '<div class="landing-sched-toolbar">' +
-            '<button type="button" class="landing-sched-head" data-team-pick="' +
-            escapeHtml(key) +
-            '" aria-pressed="false" aria-label="Use ' +
-            escapeHtml(meta.label) +
-            ' team colors">' +
-            '<span class="landing-sched-team-label">' +
-            escapeHtml(meta.label) +
-            "</span>" +
-            '<span class="landing-sched-pick-hint">Tap for colors</span>' +
-            "</button>" +
-            '<a class="sched-espn-link" href="' +
-            pageUrl +
-            '" target="_blank" rel="noopener noreferrer">ESPN</a>' +
-            "</div>" +
-            '<div class="sched-status sched-status-error">Couldn’t load ESPN schedule</div>';
-        }
-      })
-    );
+    const active = readLandingTeam();
+    if (chipsHost) {
+      if (!chipsHost.dataset.wired) {
+        buildLandingChips(active);
+        chipsHost.dataset.wired = "1";
+      } else {
+        syncLandingChips(active);
+      }
+    }
+
+    // Apply theme for selected team
+    const theme = window.PlayDelayLandingTheme;
+    if (theme && typeof theme.applyTeam === "function") {
+      theme.applyTeam(active);
+    } else if (window.PlayDelayTeams) {
+      document.documentElement.dataset.team = active;
+      if (document.body) document.body.dataset.team = active;
+      const t = window.PlayDelayTeams.get(active);
+      if (t) window.PlayDelayTeams.applyThemeVars(t);
+    }
+
+    if (panel) {
+      await renderLandingPanel(active, sport);
+    }
   }
 
   function setSport(sport) {
     if (sport !== "football" && sport !== "mbb") return;
     persistSport(sport);
-    if (document.getElementById("landingSchedByu")) mountLanding();
+    if (
+      document.getElementById("landingSchedPanel") ||
+      document.getElementById("landingTeamChips") ||
+      document.getElementById("landingSchedByu")
+    ) {
+      mountLanding();
+    }
     const panel = document.getElementById("schedulePanel");
     if (panel) {
       const team =
@@ -532,7 +648,11 @@
   };
 
   // Auto-mount landing if containers exist
-  if (document.getElementById("landingSchedByu")) {
+  if (
+    document.getElementById("landingSchedPanel") ||
+    document.getElementById("landingTeamChips") ||
+    document.getElementById("landingSchedByu")
+  ) {
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", () => mountLanding());
     } else {

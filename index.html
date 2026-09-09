@@ -7,27 +7,30 @@
   <script>
     try {
       var t = localStorage.getItem("playdelay.lastTeam");
-      if (t === "byu" || t === "utah" || t === "asu" || t === "usc") {
-        document.documentElement.dataset.team = t;
-      }
+      var ok = {
+        arizona:1, asu:1, baylor:1, byu:1, cincinnati:1, colorado:1, houston:1,
+        iowa_state:1, kansas:1, kansas_state:1, oklahoma_state:1, tcu:1,
+        texas_tech:1, ucf:1, utah:1, west_virginia:1, usc:1, miami:1
+      };
+      if (t && ok[t]) document.documentElement.dataset.team = t;
     } catch (e) {}
   </script>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
   <link rel="icon" href="assets/favicon-32.png" type="image/png" sizes="32x32" />
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
-  <title>PlayDelay — Sync radio to TV for BYU, Utah, ASU &amp; USC</title>
-  <meta name="description" content="Sync college football &amp; basketball radio to your TV. Dial delay for BYU, Utah, ASU &amp; USC live radio (KSL, ESPN 700, Arizona Sports 98.7, ESPN LA 710) plus football and men’s basketball schedules." />
+  <title>PlayDelay — Sync radio to TV for Big 12, Miami &amp; USC</title>
+  <meta name="description" content="Sync college football &amp; basketball radio to your TV. Big 12 + Miami + USC schedules; live radio for BYU (KSL), Utah (ESPN 700), ASU (Arizona Sports 98.7), and USC (ESPN LA 710)." />
   <link rel="canonical" href="https://playdelay.app/" />
-  <meta property="og:title" content="PlayDelay — Sync radio to TV for BYU, Utah, ASU &amp; USC" />
-  <meta property="og:description" content="Sync college football &amp; basketball radio to your TV. Dial delay for BYU, Utah, ASU &amp; USC live radio plus schedules." />
+  <meta property="og:title" content="PlayDelay — Sync radio to TV for Big 12, Miami &amp; USC" />
+  <meta property="og:description" content="Sync college football &amp; basketball radio to your TV. Big 12 + Miami + USC schedules; live radio for BYU, Utah, ASU &amp; USC." />
   <meta property="og:url" content="https://playdelay.app/" />
   <meta property="og:type" content="website" />
   <meta property="og:image" content="https://playdelay.app/assets/og-image.png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="PlayDelay — Sync radio to TV for BYU, Utah, ASU &amp; USC" />
-  <meta name="twitter:description" content="Sync college football &amp; basketball radio to your TV. Dial delay for BYU, Utah, ASU &amp; USC live radio plus schedules." />
+  <meta name="twitter:title" content="PlayDelay — Sync radio to TV for Big 12, Miami &amp; USC" />
+  <meta name="twitter:description" content="Sync college football &amp; basketball radio to your TV. Big 12 + Miami + USC schedules; live radio for BYU, Utah, ASU &amp; USC." />
   <meta name="twitter:image" content="https://playdelay.app/assets/og-image.png" />
   <meta name="google-site-verification" content="noxufBd_f9ALm4eSOAFZV-xJT1zgJV4WtEppzp7fz1U" />
   <script type="application/ld+json">
@@ -36,7 +39,7 @@
     "@type": "WebApplication",
     "name": "PlayDelay",
     "url": "https://playdelay.app/",
-    "description": "Sync college football and men’s basketball radio to your TV with adjustable delay for BYU, Utah, ASU, and USC.",
+    "description": "Sync college football and men’s basketball radio to your TV. Big 12 + Miami + USC schedules; live radio for BYU, Utah, ASU, and USC.",
     "applicationCategory": "SportsApplication",
     "operatingSystem": "Web",
     "offers": {
@@ -56,7 +59,7 @@
         <span class="brand-mark" aria-hidden="true">PD</span>
         <div class="brand-text">
           <h1>PlayDelay</h1>
-          <p class="subtitle">Radio ↔ TV sync · BYU, Utah, ASU &amp; USC</p>
+          <p class="subtitle">Radio ↔ TV sync · Big 12 + Miami + USC</p>
         </div>
       </div>
       <div class="header-actions">
@@ -67,13 +70,13 @@
 
     <main>
       <section class="hero" aria-labelledby="hero-title">
-        <p class="hero-kicker">BYU · Utah · ASU · USC</p>
+        <p class="hero-kicker">Big 12 · Miami · USC</p>
         <h2 id="hero-title" class="hero-title">Hear the game in sync with your TV</h2>
         <p class="hero-seo">Radio delay sync for college football &amp; men’s basketball — mute the TV, play the call, dial until they match.</p>
         <p class="hero-lead">
           Mute the broadcast, play the radio call on your phone, and dial a delay
           until the whistle and the picture line up. Built for one-handed use —
-          huge buttons. Pick BYU, Utah, ASU, or USC in the player — radio live for all four.
+          huge buttons. Full Big 12 + Miami + USC schedules; radio live for BYU, Utah, ASU &amp; USC.
         </p>
         <figure class="hero-art">
           <img
@@ -86,7 +89,7 @@
         <div class="hero-actions">
           <a class="btn btn-cta" href="login.html?next=player.html">Create account / Sign in</a>
         </div>
-        <p class="hero-note">Create account → sign in → pick team → play · free while we test · radio: BYU, Utah, ASU &amp; USC</p>
+        <p class="hero-note">Create account → sign in → pick team → play · free while we test · radio live: BYU, Utah, ASU &amp; USC</p>
       </section>
 
 
@@ -140,7 +143,7 @@
             <img class="step-icon" src="assets/icon-radio.svg" width="48" height="48" alt="" />
             <div>
               <h3>Pick your team</h3>
-              <p>Open the player, tap BYU, Utah, ASU, or USC. Play radio for BYU (KSL), Utah (ESPN 700), ASU (Arizona Sports 98.7), or USC (ESPN LA 710).</p>
+              <p>Open the player, tap any Big 12 / Miami / USC team. Play radio for BYU (KSL), Utah (ESPN 700), ASU (Arizona Sports 98.7), or USC (ESPN LA 710) — more streams soon.</p>
             </div>
           </li>
           <li class="step-card">
@@ -155,25 +158,20 @@
 
 
       <section class="landing-schedule" aria-labelledby="sched-section-title">
-        <h2 id="sched-section-title" class="section-title">Football schedules</h2>
+        <h2 id="sched-section-title" class="section-title">Football schedule</h2>
         <div id="landingSportToggle" class="sport-toggle sport-toggle-landing" role="group" aria-label="Sport" data-active="football"></div>
         <p class="landing-sched-note">2026 football via ESPN. Times in your local timezone. Tap a team name to set colors (saved for next visit).</p>
-        <div class="landing-sched-grid">
-          <div id="landingSchedByu" class="landing-sched-card" data-team="byu" aria-label="BYU schedule"></div>
-          <div id="landingSchedUtah" class="landing-sched-card" data-team="utah" aria-label="Utah schedule"></div>
-          <div id="landingSchedAsu" class="landing-sched-card" data-team="asu" aria-label="ASU schedule"></div>
-          <div id="landingSchedUsc" class="landing-sched-card" data-team="usc" aria-label="USC schedule"></div>
-        </div>
+        <div id="landingTeamChips" class="landing-team-chips" aria-label="Choose team"></div>
+        <div id="landingSchedPanel" class="landing-sched-card is-selected" data-team="byu" aria-label="Team schedule"></div>
       </section>
 
       <section class="focus-note" aria-label="Scope">
         <p>
-          PlayDelay covers <strong>BYU</strong>, <strong>Utah</strong>, <strong>ASU</strong>, and
-          <strong>USC</strong> football &amp; men’s basketball schedules (via ESPN). Radio sync is live for
+          PlayDelay covers the full <strong>Big 12</strong> plus <strong>Miami</strong> and
+          <strong>USC</strong> — football &amp; men’s basketball schedules (via ESPN). Radio sync is live for
           <strong>BYU · KSL NewsRadio</strong>, <strong>Utah · ESPN 700 KALL</strong>,
           <strong>ASU · Arizona Sports 98.7</strong>, and <strong>USC · ESPN LA 710</strong>
-          (flagship streams for football and basketball game days).
-          Create a free account, sign in, then open the player.
+          (more flagship streams coming). Create a free account, sign in, then open the player.
         </p>
       </section>
     </main>
@@ -187,6 +185,8 @@
       </p>
     </footer>
   </div>
+  <script src="teams.js"></script>
+  <script src="usage.js"></script>
   <script src="landing-theme.js"></script>
   <script src="schedule.js"></script>
   <script src="support-chat.js"></script>

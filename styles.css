@@ -902,23 +902,65 @@ a {
 }
 
 
-/* ——— Team picker (BYU | Utah | ASU | USC) ——— */
+/* ——— Team picker (Big 12 + Other) ——— */
 
 .team-picker {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
   margin: 0;
+  max-height: min(52vh, 420px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 2px;
+  scrollbar-gutter: stable;
+}
+
+.team-picker-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.team-picker-label,
+.landing-chip-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0 2px;
+}
+
+.team-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .btn-team {
-  min-height: 72px;
-  font-size: 1.45rem;
+  min-height: 64px;
+  font-size: 1.05rem;
   font-weight: 800;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.02em;
   border-width: 2px;
   background: var(--bg-button);
   color: var(--white);
+  padding: 8px 6px;
+  line-height: 1.15;
+}
+
+.btn-team[data-has-stream="0"]:not(.is-active) {
+  opacity: 0.62;
+}
+
+.btn-team.is-active {
+  background: var(--team-primary, var(--navy));
+  border-color: color-mix(in srgb, var(--team-accent, var(--accent-soft)) 70%, transparent);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--team-accent, var(--accent-soft)) 30%, transparent);
+  color: #fff;
+  opacity: 1;
 }
 
 .btn-team[data-team="byu"].is-active {
@@ -1059,13 +1101,11 @@ body[data-team="usc"] .player-accent {
 
 @media (min-width: 720px) {
   .landing-sched-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
   }
-}
-
-.btn-team {
-  font-size: 1.3rem;
-  min-height: 64px;
+  .team-picker-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 /* Utah crimson / red-black accent override */
@@ -1115,10 +1155,13 @@ body[data-team="utah"] .player-accent {
   filter: hue-rotate(-25deg) saturate(1.15);
 }
 
-@media (max-width: 380px) {
+@media (max-width: 420px) {
+  .team-picker-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   .btn-team {
-    min-height: 64px;
-    font-size: 1.25rem;
+    min-height: 60px;
+    font-size: 0.98rem;
   }
 }
 
@@ -2187,4 +2230,127 @@ body.landing .free-weekend-banner {
     bottom: max(84px, calc(env(safe-area-inset-bottom) + 72px));
     max-height: min(70vh, 560px);
   }
+}
+
+
+/* ——— Landing team chips + single schedule panel ——— */
+
+.landing-team-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0 0 16px;
+}
+
+.landing-chip-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.landing-chip-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+@media (max-width: 560px) {
+  .landing-chip-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 380px) {
+  .landing-chip-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.landing-team-chip {
+  min-height: 56px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  border-width: 2px;
+  border-style: solid;
+  border-color: var(--border);
+  background: var(--bg-button);
+  color: var(--white);
+  border-radius: 14px;
+  padding: 8px 6px;
+  line-height: 1.1;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.landing-team-chip:not(.is-active) {
+  opacity: 0.78;
+}
+
+.landing-team-chip.is-active {
+  background: var(--team-primary, var(--navy));
+  border-color: color-mix(in srgb, var(--team-accent, var(--accent-soft)) 70%, transparent);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--team-accent, var(--accent-soft)) 28%, transparent);
+  color: #fff;
+  opacity: 1;
+}
+
+.landing-team-chip:focus-visible {
+  outline: 3px solid var(--accent-soft);
+  outline-offset: 2px;
+}
+
+#landingSchedPanel.landing-sched-card {
+  margin-top: 4px;
+}
+
+/* Generic team accents from CSS vars (teams.js applyThemeVars) */
+html[data-team]:not([data-team="byu"]):not([data-team="utah"]):not([data-team="asu"]):not([data-team="usc"]) body,
+body[data-team]:not([data-team="byu"]):not([data-team="utah"]):not([data-team="asu"]):not([data-team="usc"]) {
+  --bg: var(--team-bg, #0a1628);
+  --bg-elevated: var(--team-elevated, #122038);
+  --bg-button: var(--team-button, #1a2c48);
+  --bg-button-hover: var(--team-button-hover, #243858);
+  --navy: var(--team-primary, #002e5d);
+  --navy-bright: var(--team-bright, #0a4a8a);
+  --accent-soft: var(--team-accent, #f0c14b);
+  --border: var(--team-border, rgba(240, 193, 75, 0.16));
+}
+
+html[data-team]:not([data-team="byu"]):not([data-team="utah"]):not([data-team="asu"]):not([data-team="usc"]) body .brand-mark,
+body[data-team]:not([data-team="byu"]):not([data-team="utah"]):not([data-team="asu"]):not([data-team="usc"]) .brand-mark {
+  background: var(--team-primary, var(--navy));
+  border-color: var(--team-accent, var(--accent-soft));
+}
+
+html[data-team]:not([data-team="byu"]):not([data-team="utah"]):not([data-team="asu"]):not([data-team="usc"]) body .btn-play,
+body[data-team]:not([data-team="byu"]):not([data-team="utah"]):not([data-team="asu"]):not([data-team="usc"]) .btn-play {
+  background: var(--team-bright, var(--navy-bright));
+  border-color: color-mix(in srgb, var(--team-accent, var(--accent-soft)) 40%, transparent);
+}
+
+html[data-team]:not([data-team="byu"]):not([data-team="utah"]):not([data-team="asu"]):not([data-team="usc"]) body .btn-preset.is-active,
+body[data-team]:not([data-team="byu"]):not([data-team="utah"]):not([data-team="asu"]):not([data-team="usc"]) .btn-preset.is-active {
+  background: var(--team-primary, var(--navy));
+  border-color: color-mix(in srgb, var(--team-accent, var(--accent-soft)) 50%, transparent);
+}
+
+html[data-team]:not([data-team="byu"]):not([data-team="utah"]):not([data-team="asu"]):not([data-team="usc"]) body .landing-sched-card.is-selected,
+body[data-team]:not([data-team="byu"]):not([data-team="utah"]):not([data-team="asu"]):not([data-team="usc"]) .landing-sched-card.is-selected {
+  border-color: color-mix(in srgb, var(--team-accent, var(--accent-soft)) 70%, transparent);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--team-primary, var(--navy)) 45%, transparent),
+    0 12px 36px rgba(0, 0, 0, 0.4);
+}
+
+html[data-team]:not([data-team="byu"]):not([data-team="utah"]):not([data-team="asu"]):not([data-team="usc"]) body.env-landing,
+body[data-team]:not([data-team="byu"]):not([data-team="utah"]):not([data-team="asu"]):not([data-team="usc"]).env-landing {
+  background-image:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--team-bg, #0a1628) 84%, transparent) 0%,
+      color-mix(in srgb, var(--team-bg, #0a1628) 90%, transparent) 45%,
+      color-mix(in srgb, var(--team-bg, #0a1628) 95%, transparent) 100%
+    ),
+    url("assets/env-stadium-night.jpg");
 }
