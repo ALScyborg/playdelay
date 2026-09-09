@@ -278,15 +278,47 @@
     applyTeamBranding(currentTeam);
   }
 
+  function conferenceSectionsHtml(excludeSet) {
+    const groupOrder =
+      (registry && registry.GROUP_ORDER) || ["big12", "bigten", "acc"];
+    const labels =
+      (registry && registry.GROUP_LABELS) || {
+        big12: "Big 12",
+        bigten: "Big Ten",
+        acc: "ACC",
+      };
+    const parts = [];
+    for (const group of groupOrder) {
+      const ids =
+        registry && typeof registry.idsForGroup === "function"
+          ? registry.idsForGroup(group)
+          : [];
+      const visible = ids.filter(
+        (id) => TEAMS[id] && (!excludeSet || !excludeSet.has(id))
+      );
+      if (!visible.length) continue;
+      parts.push(
+        '<div class="team-picker-group" data-group="' + group + '">'
+      );
+      parts.push(
+        '<div class="team-picker-label">' +
+          (labels[group] || group) +
+          "</div>"
+      );
+      parts.push('<div class="team-picker-grid">');
+      for (const id of visible) {
+        parts.push(teamButtonHtml(id));
+      }
+      parts.push("</div></div>");
+    }
+    return parts.join("");
+  }
+
   function buildTeamPicker() {
     if (!teamToggle) return;
     const favorites = getActiveFavorites();
-    const allIds =
-      (registry && typeof registry.orderedIds === "function"
-        ? registry.orderedIds()
-        : []) || [];
     const favSet = new Set(favorites);
-    const moreIds = allIds.filter((id) => TEAMS[id] && !favSet.has(id));
+    const moreHtml = conferenceSectionsHtml(favSet);
     const expanded = readPickerExpanded();
     const parts = [];
 
@@ -298,7 +330,7 @@
     }
     parts.push("</div></div>");
 
-    if (moreIds.length) {
+    if (moreHtml) {
       parts.push(
         '<div class="team-picker-group team-picker-more' +
           (expanded ? " is-expanded" : "") +
@@ -312,13 +344,11 @@
           "</button>"
       );
       parts.push(
-        '<div class="team-picker-grid team-picker-more-grid"' +
+        '<div class="team-picker-more-body"' +
           (expanded ? "" : " hidden") +
           ">"
       );
-      for (const id of moreIds) {
-        parts.push(teamButtonHtml(id));
-      }
+      parts.push(moreHtml);
       parts.push("</div></div>");
     }
 
@@ -328,11 +358,11 @@
     if (expandBtn) {
       expandBtn.addEventListener("click", () => {
         const group = expandBtn.closest(".team-picker-more");
-        const grid = group && group.querySelector(".team-picker-more-grid");
-        if (!group || !grid) return;
+        const body = group && group.querySelector(".team-picker-more-body");
+        if (!group || !body) return;
         const next = !group.classList.contains("is-expanded");
         group.classList.toggle("is-expanded", next);
-        grid.hidden = !next;
+        body.hidden = !next;
         expandBtn.setAttribute("aria-expanded", next ? "true" : "false");
         expandBtn.textContent = next ? "Hide teams" : "More teams";
         persistPickerExpanded(next);
@@ -359,28 +389,45 @@
   function renderFavoritesList() {
     const { list } = favoritesPanelEls();
     if (!list) return;
-    const allIds =
-      (registry && typeof registry.orderedIds === "function"
-        ? registry.orderedIds()
-        : Object.keys(TEAMS)) || [];
+    const groupOrder =
+      (registry && registry.GROUP_ORDER) || ["big12", "bigten", "acc"];
+    const labels =
+      (registry && registry.GROUP_LABELS) || {
+        big12: "Big 12",
+        bigten: "Big Ten",
+        acc: "ACC",
+      };
     const selected = new Set(draftFavoriteIds);
     const parts = [];
-    for (const id of allIds) {
-      const t = TEAMS[id];
-      if (!t) continue;
-      const on = selected.has(id);
-      const label = t.shortLabel || t.label;
+    for (const group of groupOrder) {
+      const ids =
+        registry && typeof registry.idsForGroup === "function"
+          ? registry.idsForGroup(group)
+          : [];
+      const present = ids.filter((id) => TEAMS[id]);
+      if (!present.length) continue;
+      parts.push('<div class="favorites-group" data-group="' + group + '">');
       parts.push(
-        '<button type="button" class="btn btn-team favorites-toggle' +
-          (on ? " is-active" : "") +
-          '" data-fav-team="' +
-          id +
-          '" aria-pressed="' +
-          (on ? "true" : "false") +
-          '">' +
-          label +
-          "</button>"
+        '<div class="team-picker-label">' + (labels[group] || group) + "</div>"
       );
+      parts.push('<div class="favorites-group-grid">');
+      for (const id of present) {
+        const t = TEAMS[id];
+        const on = selected.has(id);
+        const label = t.shortLabel || t.label;
+        parts.push(
+          '<button type="button" class="btn btn-team favorites-toggle' +
+            (on ? " is-active" : "") +
+            '" data-fav-team="' +
+            id +
+            '" aria-pressed="' +
+            (on ? "true" : "false") +
+            '">' +
+            label +
+            "</button>"
+        );
+      }
+      parts.push("</div></div>");
     }
     list.innerHTML = parts.join("");
     list.querySelectorAll("[data-fav-team]").forEach((btn) => {
@@ -632,9 +679,9 @@
         const moreGroup = activeBtn.closest(".team-picker-more");
         if (moreGroup && !moreGroup.classList.contains("is-expanded")) {
           const expandBtn = moreGroup.querySelector(".team-picker-expand");
-          const grid = moreGroup.querySelector(".team-picker-more-grid");
+          const body = moreGroup.querySelector(".team-picker-more-body");
           moreGroup.classList.add("is-expanded");
-          if (grid) grid.hidden = false;
+          if (body) body.hidden = false;
           if (expandBtn) {
             expandBtn.setAttribute("aria-expanded", "true");
             expandBtn.textContent = "Hide teams";

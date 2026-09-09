@@ -35,7 +35,7 @@
       byu: { id: "byu", espnId: "252", label: "BYU", group: "big12" },
       utah: { id: "utah", espnId: "254", label: "Utah", group: "big12" },
       asu: { id: "asu", espnId: "9", label: "ASU", group: "big12" },
-      usc: { id: "usc", espnId: "30", label: "USC", group: "other" },
+      usc: { id: "usc", espnId: "30", label: "USC", group: "bigten" },
     };
 
   const TEAM_STORAGE_KEY = "playdelay.lastTeam";
@@ -421,51 +421,49 @@
     const host = document.getElementById("landingTeamChips");
     if (!host) return;
     const registry = window.PlayDelayTeams;
-    const big12 = (registry && registry.BIG12_ORDER) || Object.keys(TEAM_META).filter((k) => TEAM_META[k].group !== "other");
-    const other = (registry && registry.OTHER_ORDER) || Object.keys(TEAM_META).filter((k) => TEAM_META[k].group === "other");
+    const groupOrder =
+      (registry && registry.GROUP_ORDER) || ["big12", "bigten", "acc"];
+    const labels =
+      (registry && registry.GROUP_LABELS) || {
+        big12: "Big 12",
+        bigten: "Big Ten",
+        acc: "ACC",
+      };
     const parts = [];
-    parts.push('<div class="landing-chip-group">');
-    parts.push('<div class="landing-chip-label">Big 12</div>');
-    parts.push('<div class="landing-chip-grid">');
-    for (const id of big12) {
-      const meta = TEAM_META[id];
-      if (!meta) continue;
-      const active = id === activeId ? " is-active" : "";
-      const pressed = id === activeId ? "true" : "false";
+    for (const group of groupOrder) {
+      const ids =
+        registry && typeof registry.idsForGroup === "function"
+          ? registry.idsForGroup(group)
+          : Object.keys(TEAM_META).filter(
+              (k) => TEAM_META[k] && TEAM_META[k].group === group
+            );
+      const present = ids.filter((id) => TEAM_META[id]);
+      if (!present.length) continue;
+      parts.push('<div class="landing-chip-group">');
       parts.push(
-        '<button type="button" class="btn landing-team-chip' +
-          active +
-          '" data-team-pick="' +
-          escapeHtml(id) +
-          '" aria-pressed="' +
-          pressed +
-          '">' +
-          escapeHtml(meta.shortLabel || meta.label) +
-          "</button>"
+        '<div class="landing-chip-label">' +
+          escapeHtml(labels[group] || group) +
+          "</div>"
       );
+      parts.push('<div class="landing-chip-grid">');
+      for (const id of present) {
+        const meta = TEAM_META[id];
+        const active = id === activeId ? " is-active" : "";
+        const pressed = id === activeId ? "true" : "false";
+        parts.push(
+          '<button type="button" class="btn landing-team-chip' +
+            active +
+            '" data-team-pick="' +
+            escapeHtml(id) +
+            '" aria-pressed="' +
+            pressed +
+            '">' +
+            escapeHtml(meta.shortLabel || meta.label) +
+            "</button>"
+        );
+      }
+      parts.push("</div></div>");
     }
-    parts.push("</div></div>");
-    parts.push('<div class="landing-chip-group">');
-    parts.push('<div class="landing-chip-label">Other</div>');
-    parts.push('<div class="landing-chip-grid">');
-    for (const id of other) {
-      const meta = TEAM_META[id];
-      if (!meta) continue;
-      const active = id === activeId ? " is-active" : "";
-      const pressed = id === activeId ? "true" : "false";
-      parts.push(
-        '<button type="button" class="btn landing-team-chip' +
-          active +
-          '" data-team-pick="' +
-          escapeHtml(id) +
-          '" aria-pressed="' +
-          pressed +
-          '">' +
-          escapeHtml(meta.shortLabel || meta.label) +
-          "</button>"
-      );
-    }
-    parts.push("</div></div>");
     host.innerHTML = parts.join("");
   }
 

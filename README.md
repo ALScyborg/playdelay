@@ -9,7 +9,7 @@ Landing + delay player for the full **Big 12**, plus **Miami** and **USC**. Foot
 
 1. Open the site → **Sign in / Sign up** (`login.html`)
 2. Create an account with email + password (min 6 characters), or sign in
-3. You’re sent to **`player.html`** — tap a team (scrollable Big 12 + Other grid), then Play when a stream is available (no payment gate right now)
+3. You’re sent to **`player.html`** — favorites first, then more teams organized by conference (Big 12 / Big Ten / ACC); Play when a stream is available (no payment gate right now)
 
 ## Auth
 

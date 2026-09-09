@@ -919,7 +919,7 @@ a {
 }
 
 
-/* ——— Team picker (Big 12 + Other) ——— */
+/* ——— Team picker (Favorites + conferences) ——— */
 
 .team-picker {
   display: flex;
@@ -973,7 +973,13 @@ a {
   outline-offset: 2px;
 }
 
-.team-picker-more-grid[hidden] {
+.team-picker-more-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.team-picker-more-body[hidden] {
   display: none !important;
 }
 
@@ -2504,10 +2510,22 @@ body[data-team]:not([data-team="byu"]):not([data-team="utah"]):not([data-team="a
 }
 
 .favorites-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.favorites-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.favorites-group-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
-  margin-bottom: 12px;
 }
 
 .favorites-toggle {
@@ -2550,13 +2568,13 @@ body.favorites-panel-open {
     align-items: center;
   }
 
-  .favorites-list {
+  .favorites-group-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 420px) {
-  .favorites-list {
+  .favorites-group-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

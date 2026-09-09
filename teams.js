@@ -1,11 +1,12 @@
 /**
- * PlayDelay — shared team registry (Big 12 + Miami + USC).
- * Source of truth for ids, ESPN ids, streams, colors, groups.
+ * PlayDelay — shared team registry (Big 12, Big Ten, ACC).
+ * Source of truth for ids, ESPN ids, streams, colors, conference groups.
+ * Favorites is UI-only (user list) — not a TeamDef.group.
  */
 (() => {
   "use strict";
 
-  /** @typedef {{ id: string, espnId: string, label: string, shortLabel?: string, station: string, streamUrl: string|null, accent: string, title: string, shortTitle: string, group: "big12"|"other", theme: { primary: string, bright: string, accent: string, bg: string, elevated: string, button: string, buttonHover: string, border: string, themeColor: string } }} TeamDef */
+  /** @typedef {{ id: string, espnId: string, label: string, shortLabel?: string, station: string, streamUrl: string|null, accent: string, title: string, shortTitle: string, group: "big12"|"bigten"|"acc", theme: { primary: string, bright: string, accent: string, bg: string, elevated: string, button: string, buttonHover: string, border: string, themeColor: string } }} TeamDef */
 
   /** @type {Record<string, TeamDef>} */
   const TEAMS = {
@@ -387,7 +388,7 @@
       accent: "cardinal",
       title: "USC · ESPN LA 710 — PlayDelay",
       shortTitle: "USC Radio",
-      group: "other",
+      group: "bigten",
       theme: {
         primary: "#990000",
         bright: "#b30000",
@@ -410,7 +411,7 @@
       accent: "miami",
       title: "Miami · WQAM 104.3 — PlayDelay",
       shortTitle: "Miami Radio",
-      group: "other",
+      group: "acc",
       theme: {
         primary: "#f47321",
         bright: "#ff8a3d",
@@ -451,7 +452,21 @@
     "utah",
     "west_virginia",
   ];
-  const OTHER_ORDER = ["usc", "miami"];
+  const BIGTEN_ORDER = ["usc"];
+  const ACC_ORDER = ["miami"];
+
+  /** Conference display order for pickers / chips (favorites is UI-only). */
+  const GROUP_ORDER = ["big12", "bigten", "acc"];
+  const GROUP_LABELS = {
+    big12: "Big 12",
+    bigten: "Big Ten",
+    acc: "ACC",
+  };
+  const GROUP_IDS = {
+    big12: BIG12_ORDER,
+    bigten: BIGTEN_ORDER,
+    acc: ACC_ORDER,
+  };
 
   /** Default visible favorites in the player team picker (huge taps). */
   const FAVORITE_ORDER = ["byu", "utah", "asu", "usc", "miami", "arizona"];
@@ -537,8 +552,16 @@
     return out;
   }
 
+  function idsForGroup(group) {
+    return (GROUP_IDS[group] || []).slice();
+  }
+
   function orderedIds() {
-    return BIG12_ORDER.concat(OTHER_ORDER);
+    const out = [];
+    for (const g of GROUP_ORDER) {
+      out.push.apply(out, idsForGroup(g));
+    }
+    return out;
   }
 
   window.PlayDelayTeams = {
@@ -548,7 +571,11 @@
     LIVE_STREAM_IDS,
     LIVE_STREAM_LABELS,
     BIG12_ORDER,
-    OTHER_ORDER,
+    BIGTEN_ORDER,
+    ACC_ORDER,
+    GROUP_ORDER,
+    GROUP_LABELS,
+    GROUP_IDS,
     FAVORITE_ORDER,
     isValid,
     get,
@@ -558,6 +585,7 @@
     persistTeam,
     applyThemeVars,
     teamMetaMap,
+    idsForGroup,
     orderedIds,
   };
 })();
