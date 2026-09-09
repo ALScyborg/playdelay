@@ -1,18 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="PlayDelay">
-  <rect width="32" height="32" rx="7" fill="#001b44"/>
-  <rect x="1.5" y="1.5" width="29" height="29" rx="5.5" fill="none" stroke="#c29235" stroke-width="1.4"/>
-  <!-- Italic PD -->
-  <g fill="#ffffff" transform="translate(16 13) skewX(-12) translate(-16 -13)">
-    <text x="16" y="15.2" text-anchor="middle" font-family="Arial Black, Helvetica Neue, Arial, sans-serif" font-size="11.5" font-weight="800" letter-spacing="-0.5">PD</text>
-  </g>
-  <!-- Gold radio waves -->
-  <g fill="none" stroke="#c29235" stroke-linecap="round" stroke-width="1.35">
-    <circle cx="16" cy="22.2" r="1.15" fill="#c29235" stroke="none"/>
-    <path d="M12.6 20.6a4.2 4.2 0 0 0 0 3.2"/>
-    <path d="M19.4 20.6a4.2 4.2 0 0 1 0 3.2"/>
-    <path d="M10.4 19.2a6.8 6.8 0 0 0 0 6"/>
-    <path d="M21.6 19.2a6.8 6.8 0 0 1 0 6"/>
-    <path d="M8.3 17.8a9.2 9.2 0 0 0 0 8.8"/>
-    <path d="M23.7 17.8a9.2 9.2 0 0 1 0 8.8"/>
+  <rect width="32" height="32" rx="7" fill="#000000"/>
+  <g fill="#FFCC00" transform="translate(16 17) skewX(-14) translate(-16 -17)">
+    <text x="16" y="21" text-anchor="middle"
+          font-family="Arial Black, Helvetica Neue, Arial, sans-serif"
+          font-size="16" font-weight="900" letter-spacing="-1.2">PD</text>
   </g>
 </svg>
