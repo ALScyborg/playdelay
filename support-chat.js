@@ -69,7 +69,9 @@
         id: "pdSupportFab",
         "aria-expanded": "false",
         "aria-controls": "pdSupportPanel",
-        textContent: "Help",
+        "aria-label": "Help — open customer service chat",
+        title: "Help",
+        textContent: "?",
       }
     );
 
@@ -222,6 +224,7 @@
       backdrop.hidden = !open;
       fab.setAttribute("aria-expanded", open ? "true" : "false");
       root.classList.toggle("is-open", open);
+      fab.textContent = open ? "Help" : "?";
       if (open) {
         prefill().then(() => {
           (emailInput.value ? msgInput : emailInput).focus();
