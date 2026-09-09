@@ -11,7 +11,7 @@
   }
   const TEAMS = (registry && registry.TEAMS) || {};
   const LIVE_LABELS =
-    (registry && registry.LIVE_STREAM_LABELS) || ["BYU", "Utah", "ASU", "USC"];
+    (registry && registry.LIVE_STREAM_LABELS) || [];
 
   const TEAM_STORAGE_KEY = "playdelay.lastTeam";
   const WORKLET_URL = "./worklets/delay-processor.js";

@@ -1,6 +1,6 @@
 # PlayDelay (Big 12 + Miami + USC)
 
-Landing + delay player for the full **Big 12**, plus **Miami** and **USC**. Football & men’s basketball schedules via ESPN. **Radio live** for **BYU (KSL)**, **Utah (ESPN 700)**, **ASU (Arizona Sports 98.7)**, and **USC (ESPN LA 710)** — other teams show schedules with Play disabled until streams land. **Free for now:** create a Supabase account, sign in, pick a team, then play.
+Landing + delay player for the full **Big 12**, plus **Miami** and **USC**. Football & men’s basketball schedules via ESPN. **Radio live** for nearly every team — **Kansas State** stays coming-soon (SurferNetwork JWT). **Free for now:** create a Supabase account, sign in, pick a team, then play.
 
 - Live (GitHub Pages): https://alscyborg.github.io/playdelay/
 - Custom domain: https://playdelay.app/
@@ -51,4 +51,4 @@ python3 -m http.server 8765
 - Do not put service-role or Stripe secret keys in this repo.
 - ASU (KMVP): game-day geo blackouts may apply outside Phoenix; the continuous mount may still work.
 - USC (KSPN): Amperwave redirects with session tokens — keep the stable `live.amperwave.net/direct/...` URL only.
-- New teams ship with `streamUrl: null` until researched; Play shows a coming-soon banner.
+- Teams with `streamUrl: null` (currently Kansas State) show a coming-soon banner; Play enables wherever a stream is set.
