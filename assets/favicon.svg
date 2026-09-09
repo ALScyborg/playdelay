@@ -1,11 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="PlayDelay">
-  <rect width="32" height="32" rx="7" fill="#002e5d"/>
-  <rect x="1.25" y="1.25" width="29.5" height="29.5" rx="5.75" fill="none" stroke="#f0c14b" stroke-width="1.5"/>
-  <!-- Bold geometric PD — path letters for crisp tiny rendering -->
-  <g fill="#ffffff">
-    <!-- P -->
-    <path d="M7.2 8.2h5.1c2.85 0 4.55 1.55 4.55 3.85 0 2.35-1.7 3.9-4.55 3.9H9.85v4.9H7.2V8.2zm2.65 2.15v3.35h2.3c1.35 0 2.05-.65 2.05-1.7 0-1.05-.7-1.65-2.05-1.65h-2.3z"/>
-    <!-- D -->
-    <path d="M17.1 8.2h4.4c3.55 0 5.7 2.2 5.7 5.85s-2.15 5.85-5.7 5.85h-4.4V8.2zm2.65 2.15v7.4h1.7c2.05 0 3.15-1.35 3.15-3.7 0-2.35-1.1-3.7-3.15-3.7h-1.7z"/>
+  <rect width="32" height="32" rx="7" fill="#001b44"/>
+  <rect x="1.5" y="1.5" width="29" height="29" rx="5.5" fill="none" stroke="#c29235" stroke-width="1.4"/>
+  <!-- Italic PD -->
+  <g fill="#ffffff" transform="translate(16 13) skewX(-12) translate(-16 -13)">
+    <text x="16" y="15.2" text-anchor="middle" font-family="Arial Black, Helvetica Neue, Arial, sans-serif" font-size="11.5" font-weight="800" letter-spacing="-0.5">PD</text>
+  </g>
+  <!-- Gold radio waves -->
+  <g fill="none" stroke="#c29235" stroke-linecap="round" stroke-width="1.35">
+    <circle cx="16" cy="22.2" r="1.15" fill="#c29235" stroke="none"/>
+    <path d="M12.6 20.6a4.2 4.2 0 0 0 0 3.2"/>
+    <path d="M19.4 20.6a4.2 4.2 0 0 1 0 3.2"/>
+    <path d="M10.4 19.2a6.8 6.8 0 0 0 0 6"/>
+    <path d="M21.6 19.2a6.8 6.8 0 0 1 0 6"/>
+    <path d="M8.3 17.8a9.2 9.2 0 0 0 0 8.8"/>
+    <path d="M23.7 17.8a9.2 9.2 0 0 1 0 8.8"/>
   </g>
 </svg>
