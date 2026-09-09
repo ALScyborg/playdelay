@@ -253,6 +253,10 @@
       }
     }
 
+    // Always start minimized/closed (panel CSS uses display:flex which can fight [hidden])
+    setOpen(false);
+    fab.textContent = "?";
+
     fab.addEventListener("click", () => {
       const open = panel.hidden;
       if (open) showSuccess(false);

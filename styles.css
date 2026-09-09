@@ -2024,26 +2024,28 @@ body.landing .free-weekend-banner {
   position: absolute;
   right: max(16px, env(safe-area-inset-right));
   bottom: max(16px, env(safe-area-inset-bottom));
-  /* Minimized by default: compact "?" chip */
-  min-width: 48px;
-  min-height: 48px;
-  width: 48px;
-  height: 48px;
+  /* Minimized by default: tiny "?" chip — panel stays closed */
+  min-width: 40px;
+  min-height: 40px;
+  width: 40px;
+  height: 40px;
+  max-width: 40px;
+  max-height: 40px;
   padding: 0;
   border-radius: 999px;
-  border: 2px solid rgba(240, 193, 75, 0.55);
-  background: rgba(10, 22, 40, 0.88);
+  border: 1px solid rgba(240, 193, 75, 0.4);
+  background: rgba(10, 22, 40, 0.72);
   color: var(--warn);
   font-family: inherit;
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 800;
   letter-spacing: 0;
   line-height: 1;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.28);
   cursor: pointer;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
-  opacity: 0.85;
+  opacity: 0.65;
 }
 
 .pd-support-root.is-open .pd-support-fab {
@@ -2067,6 +2069,11 @@ body.landing .free-weekend-banner {
   outline-offset: 3px;
 }
 
+
+.pd-support-panel[hidden],
+.pd-support-backdrop[hidden] {
+  display: none !important;
+}
 
 .pd-support-panel {
   position: absolute;
@@ -2222,7 +2229,11 @@ body.landing .free-weekend-banner {
   body:has(.player-app) .pd-support-fab {
     bottom: max(12px, env(safe-area-inset-bottom));
     right: max(12px, env(safe-area-inset-right));
-    min-height: 60px;
+  }
+
+  .player-app ~ .pd-support-root.is-open .pd-support-fab,
+  body:has(.player-app) .pd-support-root.is-open .pd-support-fab {
+    min-height: 56px;
   }
 
   .player-app ~ .pd-support-root .pd-support-panel,
