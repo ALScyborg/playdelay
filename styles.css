@@ -84,6 +84,23 @@ a {
   flex-shrink: 0;
   color: var(--white);
   text-decoration: none;
+  overflow: hidden;
+  padding: 0;
+}
+
+.brand-mark .brand-logo,
+.brand-mark img.team-logo {
+  display: block;
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.brand-mark .brand-mark-text {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
 }
 
 .brand-mark-link:hover {
@@ -937,6 +954,27 @@ a {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
+}
+
+.team-picker-expand {
+  min-height: 56px;
+  width: 100%;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  border-width: 2px;
+  background: var(--bg-elevated, var(--bg-button));
+  color: var(--white);
+  padding: 10px 12px;
+}
+
+.team-picker-expand:focus-visible {
+  outline: 3px solid var(--accent-soft);
+  outline-offset: 2px;
+}
+
+.team-picker-more-grid[hidden] {
+  display: none !important;
 }
 
 .btn-team {

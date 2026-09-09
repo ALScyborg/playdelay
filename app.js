@@ -138,48 +138,128 @@
     });
   }
 
+  function teamLogoHtml(espnId, size) {
+    if (registry && typeof registry.logoImgHtml === "function") {
+      return registry.logoImgHtml(espnId, size);
+    }
+    if (!espnId) return "";
+    const s = size || 36;
+    const url =
+      "https://a.espncdn.com/i/teamlogos/ncaa/500/" +
+      encodeURIComponent(String(espnId)) +
+      ".png";
+    return (
+      '<img class="team-logo" src="' +
+      url +
+      '" alt="" width="' +
+      s +
+      '" height="' +
+      s +
+      '" loading="lazy" decoding="async" onerror="this.hidden=true">'
+    );
+  }
+
+  const PICKER_EXPANDED_KEY = "playdelay.teamPickerExpanded";
+
+  function readPickerExpanded() {
+    try {
+      return localStorage.getItem(PICKER_EXPANDED_KEY) === "1";
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function persistPickerExpanded(expanded) {
+    try {
+      localStorage.setItem(PICKER_EXPANDED_KEY, expanded ? "1" : "0");
+    } catch (_) {}
+  }
+
+  function teamButtonHtml(id) {
+    const t = TEAMS[id];
+    if (!t) return "";
+    const live = t.streamUrl ? ' data-has-stream="1"' : ' data-has-stream="0"';
+    const label = t.shortLabel || t.label;
+    return (
+      '<button type="button" class="btn btn-team" data-team="' +
+      id +
+      '"' +
+      live +
+      ' aria-pressed="false">' +
+      label +
+      "</button>"
+    );
+  }
+
   function buildTeamPicker() {
     if (!teamToggle) return;
-    const big12 = (registry && registry.BIG12_ORDER) || [];
-    const other = (registry && registry.OTHER_ORDER) || [];
+    const favorites =
+      (registry && registry.FAVORITE_ORDER) || [
+        "byu",
+        "utah",
+        "asu",
+        "usc",
+        "miami",
+        "arizona",
+      ];
+    const allIds =
+      (registry && typeof registry.orderedIds === "function"
+        ? registry.orderedIds()
+        : []) || [];
+    const favSet = new Set(favorites);
+    const moreIds = allIds.filter((id) => TEAMS[id] && !favSet.has(id));
+    const expanded = readPickerExpanded();
     const parts = [];
-    parts.push('<div class="team-picker-group" data-group="big12">');
-    parts.push('<div class="team-picker-label">Big 12</div>');
+
+    parts.push('<div class="team-picker-group" data-group="favorites">');
+    parts.push('<div class="team-picker-label">Favorites</div>');
     parts.push('<div class="team-picker-grid">');
-    for (const id of big12) {
-      const t = TEAMS[id];
-      if (!t) continue;
-      const live = t.streamUrl ? ' data-has-stream="1"' : ' data-has-stream="0"';
-      parts.push(
-        '<button type="button" class="btn btn-team" data-team="' +
-          id +
-          '"' +
-          live +
-          ' aria-pressed="false">' +
-          (t.shortLabel || t.label) +
-          "</button>"
-      );
+    for (const id of favorites) {
+      parts.push(teamButtonHtml(id));
     }
     parts.push("</div></div>");
-    parts.push('<div class="team-picker-group" data-group="other">');
-    parts.push('<div class="team-picker-label">Other</div>');
-    parts.push('<div class="team-picker-grid">');
-    for (const id of other) {
-      const t = TEAMS[id];
-      if (!t) continue;
-      const live = t.streamUrl ? ' data-has-stream="1"' : ' data-has-stream="0"';
+
+    if (moreIds.length) {
       parts.push(
-        '<button type="button" class="btn btn-team" data-team="' +
-          id +
-          '"' +
-          live +
-          ' aria-pressed="false">' +
-          (t.shortLabel || t.label) +
+        '<div class="team-picker-group team-picker-more' +
+          (expanded ? " is-expanded" : "") +
+          '" data-group="more">'
+      );
+      parts.push(
+        '<button type="button" class="btn team-picker-expand" id="teamPickerExpand" aria-expanded="' +
+          (expanded ? "true" : "false") +
+          '">' +
+          (expanded ? "Hide teams" : "More teams") +
           "</button>"
       );
+      parts.push(
+        '<div class="team-picker-grid team-picker-more-grid"' +
+          (expanded ? "" : " hidden") +
+          ">"
+      );
+      for (const id of moreIds) {
+        parts.push(teamButtonHtml(id));
+      }
+      parts.push("</div></div>");
     }
-    parts.push("</div></div>");
+
     teamToggle.innerHTML = parts.join("");
+
+    const expandBtn = document.getElementById("teamPickerExpand");
+    if (expandBtn) {
+      expandBtn.addEventListener("click", () => {
+        const group = expandBtn.closest(".team-picker-more");
+        const grid = group && group.querySelector(".team-picker-more-grid");
+        if (!group || !grid) return;
+        const next = !group.classList.contains("is-expanded");
+        group.classList.toggle("is-expanded", next);
+        grid.hidden = !next;
+        expandBtn.setAttribute("aria-expanded", next ? "true" : "false");
+        expandBtn.textContent = next ? "Hide teams" : "More teams";
+        persistPickerExpanded(next);
+      });
+    }
+
     // Refresh nodelist after rebuild
     return Array.from(teamToggle.querySelectorAll("[data-team]"));
   }
@@ -190,7 +270,28 @@
     if (registry && typeof registry.applyThemeVars === "function") {
       registry.applyThemeVars(team);
     }
-    if (brandMarkEl) brandMarkEl.textContent = team.shortLabel || team.label;
+    if (brandMarkEl) {
+      const label = team.shortLabel || team.label;
+      const logo = teamLogoHtml(team.espnId, 40);
+      if (logo) {
+        brandMarkEl.innerHTML =
+          logo.replace('class="team-logo"', 'class="team-logo brand-logo"') +
+          '<span class="brand-mark-text" hidden>' +
+          label +
+          "</span>";
+        const img = brandMarkEl.querySelector("img.brand-logo");
+        if (img) {
+          img.alt = label;
+          img.addEventListener("error", () => {
+            img.hidden = true;
+            const span = brandMarkEl.querySelector(".brand-mark-text");
+            if (span) span.hidden = false;
+          });
+        }
+      } else {
+        brandMarkEl.textContent = label;
+      }
+    }
     if (stationTitleEl) {
       stationTitleEl.textContent = team.streamUrl
         ? team.station
@@ -210,14 +311,28 @@
     });
     if (teamToggle) {
       teamToggle.setAttribute("data-active", team.id);
-      // Keep active chip visible in scrollable picker
       const activeBtn = teamToggle.querySelector(
         '[data-team="' + team.id + '"]'
       );
-      if (activeBtn && typeof activeBtn.scrollIntoView === "function") {
-        try {
-          activeBtn.scrollIntoView({ block: "nearest", inline: "nearest" });
-        } catch (_) {}
+      // If active team is in collapsed More, expand so it is reachable
+      if (activeBtn) {
+        const moreGroup = activeBtn.closest(".team-picker-more");
+        if (moreGroup && !moreGroup.classList.contains("is-expanded")) {
+          const expandBtn = moreGroup.querySelector(".team-picker-expand");
+          const grid = moreGroup.querySelector(".team-picker-more-grid");
+          moreGroup.classList.add("is-expanded");
+          if (grid) grid.hidden = false;
+          if (expandBtn) {
+            expandBtn.setAttribute("aria-expanded", "true");
+            expandBtn.textContent = "Hide teams";
+          }
+          persistPickerExpanded(true);
+        }
+        if (typeof activeBtn.scrollIntoView === "function") {
+          try {
+            activeBtn.scrollIntoView({ block: "nearest", inline: "nearest" });
+          } catch (_) {}
+        }
       }
     }
   }

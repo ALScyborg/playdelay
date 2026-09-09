@@ -453,12 +453,41 @@
   ];
   const OTHER_ORDER = ["usc", "miami"];
 
+  /** Default visible favorites in the player team picker (huge taps). */
+  const FAVORITE_ORDER = ["byu", "utah", "asu", "usc", "miami", "arizona"];
+
   function isValid(id) {
     return VALID.has(id);
   }
 
   function get(id) {
     return TEAMS[id] || null;
+  }
+
+  /** ESPN CDN team logo (200×200 PNG). */
+  function logoUrl(espnId) {
+    if (espnId == null || espnId === "") return "";
+    return (
+      "https://a.espncdn.com/i/teamlogos/ncaa/500/" +
+      encodeURIComponent(String(espnId)) +
+      ".png"
+    );
+  }
+
+  /** Safe <img> markup for team logos; hides itself on error. */
+  function logoImgHtml(espnId, size) {
+    const url = logoUrl(espnId);
+    if (!url) return "";
+    const s = size || 36;
+    return (
+      '<img class="team-logo" src="' +
+      url +
+      '" alt="" width="' +
+      s +
+      '" height="' +
+      s +
+      '" loading="lazy" decoding="async" onerror="this.hidden=true">'
+    );
   }
 
   function readStoredTeamId(fallback) {
@@ -502,6 +531,7 @@
         shortLabel: t.shortLabel || t.label,
         group: t.group,
         hasStream: !!t.streamUrl,
+        logoUrl: logoUrl(t.espnId),
       };
     }
     return out;
@@ -519,8 +549,11 @@
     LIVE_STREAM_LABELS,
     BIG12_ORDER,
     OTHER_ORDER,
+    FAVORITE_ORDER,
     isValid,
     get,
+    logoUrl,
+    logoImgHtml,
     readStoredTeamId,
     persistTeam,
     applyThemeVars,
