@@ -160,6 +160,27 @@
   }
 
   const PICKER_EXPANDED_KEY = "playdelay.teamPickerExpanded";
+  const FAV_STORAGE_KEY = "playdelay.favoriteTeams";
+  const FAV_PROMPTED_KEY = "playdelay.favoritesPrompted";
+  const FAV_MIN = 1;
+  const FAV_MAX = 12;
+  const FAV_RECOMMENDED = 8;
+
+  const DEFAULT_FAVORITES =
+    (registry && registry.FAVORITE_ORDER && registry.FAVORITE_ORDER.slice()) || [
+      "byu",
+      "utah",
+      "asu",
+      "usc",
+      "miami",
+      "arizona",
+    ];
+
+  /** @type {string[]} */
+  let favoriteIds = DEFAULT_FAVORITES.slice();
+  /** @type {string[]} */
+  let draftFavoriteIds = [];
+  let favoritesPanelMode = "edit"; // "edit" | "prompt"
 
   function readPickerExpanded() {
     try {
@@ -173,6 +194,58 @@
     try {
       localStorage.setItem(PICKER_EXPANDED_KEY, expanded ? "1" : "0");
     } catch (_) {}
+  }
+
+  function sanitizeFavoriteIds(raw) {
+    if (!Array.isArray(raw)) return [];
+    const out = [];
+    const seen = new Set();
+    for (const item of raw) {
+      const id = String(item || "").trim();
+      if (!id || !TEAMS[id] || seen.has(id)) continue;
+      seen.add(id);
+      out.push(id);
+      if (out.length >= FAV_MAX) break;
+    }
+    return out;
+  }
+
+  function readLocalFavorites() {
+    try {
+      const raw = localStorage.getItem(FAV_STORAGE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      const ids = sanitizeFavoriteIds(parsed);
+      return ids.length ? ids : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function writeLocalFavorites(ids) {
+    const cleaned = sanitizeFavoriteIds(ids);
+    try {
+      localStorage.setItem(FAV_STORAGE_KEY, JSON.stringify(cleaned));
+    } catch (_) {}
+    return cleaned;
+  }
+
+  function wasFavoritesPrompted() {
+    try {
+      return localStorage.getItem(FAV_PROMPTED_KEY) === "1";
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function markFavoritesPrompted() {
+    try {
+      localStorage.setItem(FAV_PROMPTED_KEY, "1");
+    } catch (_) {}
+  }
+
+  function getActiveFavorites() {
+    return favoriteIds.length ? favoriteIds : DEFAULT_FAVORITES.slice();
   }
 
   function teamButtonHtml(id) {
@@ -191,17 +264,23 @@
     );
   }
 
+  function wireTeamButtons(buttons) {
+    (buttons || []).forEach((btn) => {
+      btn.addEventListener("click", () => {
+        selectTeam(btn.dataset.team);
+      });
+    });
+  }
+
+  function rebuildTeamPicker() {
+    teamButtons = buildTeamPicker() || [];
+    wireTeamButtons(teamButtons);
+    applyTeamBranding(currentTeam);
+  }
+
   function buildTeamPicker() {
     if (!teamToggle) return;
-    const favorites =
-      (registry && registry.FAVORITE_ORDER) || [
-        "byu",
-        "utah",
-        "asu",
-        "usc",
-        "miami",
-        "arizona",
-      ];
+    const favorites = getActiveFavorites();
     const allIds =
       (registry && typeof registry.orderedIds === "function"
         ? registry.orderedIds()
@@ -262,6 +341,240 @@
 
     // Refresh nodelist after rebuild
     return Array.from(teamToggle.querySelectorAll("[data-team]"));
+  }
+
+  function favoritesPanelEls() {
+    return {
+      panel: document.getElementById("favoritesPanel"),
+      list: document.getElementById("favoritesList"),
+      note: document.getElementById("favoritesPanelNote"),
+      err: document.getElementById("favoritesError"),
+      saveBtn: document.getElementById("favoritesSaveBtn"),
+      laterBtn: document.getElementById("favoritesLaterBtn"),
+      closeBtn: document.getElementById("favoritesCloseBtn"),
+      title: document.getElementById("favoritesPanelTitle"),
+    };
+  }
+
+  function renderFavoritesList() {
+    const { list } = favoritesPanelEls();
+    if (!list) return;
+    const allIds =
+      (registry && typeof registry.orderedIds === "function"
+        ? registry.orderedIds()
+        : Object.keys(TEAMS)) || [];
+    const selected = new Set(draftFavoriteIds);
+    const parts = [];
+    for (const id of allIds) {
+      const t = TEAMS[id];
+      if (!t) continue;
+      const on = selected.has(id);
+      const label = t.shortLabel || t.label;
+      parts.push(
+        '<button type="button" class="btn btn-team favorites-toggle' +
+          (on ? " is-active" : "") +
+          '" data-fav-team="' +
+          id +
+          '" aria-pressed="' +
+          (on ? "true" : "false") +
+          '">' +
+          label +
+          "</button>"
+      );
+    }
+    list.innerHTML = parts.join("");
+    list.querySelectorAll("[data-fav-team]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-fav-team");
+        const idx = draftFavoriteIds.indexOf(id);
+        if (idx >= 0) {
+          draftFavoriteIds.splice(idx, 1);
+        } else {
+          if (draftFavoriteIds.length >= FAV_MAX) {
+            const { err } = favoritesPanelEls();
+            if (err) {
+              err.textContent = "Max " + FAV_MAX + " favorites. Deselect one first.";
+              err.hidden = false;
+            }
+            return;
+          }
+          draftFavoriteIds.push(id);
+        }
+        const { err } = favoritesPanelEls();
+        if (err) err.hidden = true;
+        updateFavoritesNote();
+        renderFavoritesList();
+      });
+    });
+    updateFavoritesNote();
+  }
+
+  function updateFavoritesNote() {
+    const { note } = favoritesPanelEls();
+    if (!note) return;
+    const n = draftFavoriteIds.length;
+    let msg =
+      "Pick " +
+      FAV_MIN +
+      "–" +
+      FAV_MAX +
+      " teams (about " +
+      FAV_RECOMMENDED +
+      " is ideal). They show first in the picker.";
+    if (n) {
+      msg = n + " selected · recommended ~" + FAV_RECOMMENDED + " (max " + FAV_MAX + ").";
+      if (n > FAV_RECOMMENDED) {
+        msg += " A shorter list is easier on game day.";
+      }
+    }
+    note.textContent = msg;
+  }
+
+  function openFavoritesPanel(mode) {
+    const els = favoritesPanelEls();
+    if (!els.panel) return;
+    favoritesPanelMode = mode || "edit";
+    draftFavoriteIds = getActiveFavorites().slice();
+    if (els.title) {
+      els.title.textContent =
+        favoritesPanelMode === "prompt" ? "Pick your favorite teams" : "Your favorites";
+    }
+    if (els.laterBtn) {
+      els.laterBtn.hidden = favoritesPanelMode !== "prompt";
+    }
+    if (els.err) els.err.hidden = true;
+    renderFavoritesList();
+    els.panel.hidden = false;
+    document.body.classList.add("favorites-panel-open");
+  }
+
+  function closeFavoritesPanel() {
+    const els = favoritesPanelEls();
+    if (!els.panel) return;
+    els.panel.hidden = true;
+    document.body.classList.remove("favorites-panel-open");
+  }
+
+  async function saveFavoritesFromPanel() {
+    const els = favoritesPanelEls();
+    const cleaned = sanitizeFavoriteIds(draftFavoriteIds);
+    if (cleaned.length < FAV_MIN) {
+      if (els.err) {
+        els.err.textContent = "Pick at least " + FAV_MIN + " team.";
+        els.err.hidden = false;
+      }
+      return;
+    }
+    if (els.saveBtn) {
+      els.saveBtn.disabled = true;
+      els.saveBtn.textContent = "Saving…";
+    }
+    if (els.err) els.err.hidden = true;
+    try {
+      favoriteIds = writeLocalFavorites(cleaned);
+      const auth = window.PlayDelayAuth;
+      if (auth && typeof auth.updateFavoriteTeamIds === "function") {
+        const saved = await auth.updateFavoriteTeamIds(favoriteIds);
+        favoriteIds = writeLocalFavorites(saved.length ? saved : favoriteIds);
+      }
+      markFavoritesPrompted();
+      rebuildTeamPicker();
+      closeFavoritesPanel();
+      showToast("Favorites saved");
+    } catch (e) {
+      console.warn("save favorites", e);
+      // Keep local mirror even if remote fails
+      favoriteIds = writeLocalFavorites(cleaned);
+      markFavoritesPrompted();
+      rebuildTeamPicker();
+      if (els.err) {
+        els.err.textContent =
+          (e && e.message) || "Saved on this device; cloud sync failed.";
+        els.err.hidden = false;
+      } else {
+        closeFavoritesPanel();
+        showToast("Favorites saved on this device");
+      }
+    } finally {
+      if (els.saveBtn) {
+        els.saveBtn.disabled = false;
+        els.saveBtn.textContent = "Save favorites";
+      }
+    }
+  }
+
+  function wireFavoritesUi() {
+    const editBtn = document.getElementById("editFavoritesBtn");
+    const els = favoritesPanelEls();
+    if (editBtn) {
+      editBtn.addEventListener("click", () => openFavoritesPanel("edit"));
+    }
+    if (els.closeBtn) {
+      els.closeBtn.addEventListener("click", () => {
+        markFavoritesPrompted();
+        closeFavoritesPanel();
+      });
+    }
+    if (els.laterBtn) {
+      els.laterBtn.addEventListener("click", () => {
+        markFavoritesPrompted();
+        closeFavoritesPanel();
+      });
+    }
+    if (els.saveBtn) {
+      els.saveBtn.addEventListener("click", () => {
+        saveFavoritesFromPanel();
+      });
+    }
+    if (els.panel) {
+      els.panel.addEventListener("click", (e) => {
+        if (e.target === els.panel) {
+          markFavoritesPrompted();
+          closeFavoritesPanel();
+        }
+      });
+    }
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") return;
+      if (!els.panel || els.panel.hidden) return;
+      markFavoritesPrompted();
+      closeFavoritesPanel();
+    });
+  }
+
+  async function loadUserFavorites() {
+    const local = readLocalFavorites();
+    if (local) favoriteIds = local;
+    else favoriteIds = DEFAULT_FAVORITES.slice();
+
+    const auth = window.PlayDelayAuth;
+    if (!auth || typeof auth.fetchFavoriteTeamIds !== "function") {
+      return { needsPrompt: !local && !wasFavoritesPrompted() };
+    }
+    try {
+      const remote = await auth.fetchFavoriteTeamIds();
+      const remoteIds = sanitizeFavoriteIds(remote && remote.ids);
+      if (remoteIds.length) {
+        favoriteIds = writeLocalFavorites(remoteIds);
+        return { needsPrompt: false };
+      }
+      // Server empty: keep local if present, else defaults + soft prompt
+      if (local && local.length) {
+        // Push local mirror up so profile stays in sync
+        try {
+          if (typeof auth.updateFavoriteTeamIds === "function") {
+            await auth.updateFavoriteTeamIds(local);
+          }
+        } catch (e) {
+          console.warn("sync local favorites", e);
+        }
+        return { needsPrompt: false };
+      }
+      return { needsPrompt: !wasFavoritesPrompted() };
+    } catch (e) {
+      console.warn("load favorites", e);
+      return { needsPrompt: !local && !wasFavoritesPrompted() };
+    }
   }
 
   function applyTeamBranding(team) {
@@ -770,12 +1083,13 @@
     );
   });
 
+  // Snappy first paint from localStorage / defaults, then sync from Supabase
+  const localFavBoot = readLocalFavorites();
+  if (localFavBoot) favoriteIds = localFavBoot;
+
   teamButtons = buildTeamPicker() || [];
-  teamButtons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      selectTeam(btn.dataset.team);
-    });
-  });
+  wireTeamButtons(teamButtons);
+  wireFavoritesUi();
 
   wireAudioEvents(audio);
   applyTeamBranding(currentTeam);
@@ -790,6 +1104,8 @@
   document.addEventListener("keydown", (event) => {
     const tag = (event.target && event.target.tagName) || "";
     if (tag === "INPUT" || tag === "TEXTAREA") return;
+    const favPanel = document.getElementById("favoritesPanel");
+    if (favPanel && !favPanel.hidden) return;
 
     if (event.code === "Space") {
       event.preventDefault();
@@ -810,4 +1126,13 @@
   updateDelayUI();
   applyVolume();
   restoreDelayPreference();
+
+  loadUserFavorites()
+    .then((result) => {
+      rebuildTeamPicker();
+      if (result && result.needsPrompt) {
+        openFavoritesPanel("prompt");
+      }
+    })
+    .catch((e) => console.warn("favorites boot", e));
 })();

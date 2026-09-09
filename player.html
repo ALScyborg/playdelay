@@ -23,7 +23,7 @@
   <meta name="twitter:description" content="Pick a Big 12 / Miami / USC team, play live radio when available, and dial delay until the call matches your TV." />
   <meta name="twitter:image" content="https://playdelay.app/assets/og-image.png" />
   <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="stylesheet" href="styles.css?v=helpmin2" />
+  <link rel="stylesheet" href="styles.css?v=fav1" />
 </head>
 <body>
   <div class="app player-app">
@@ -63,6 +63,37 @@
       >
         <!-- Filled by app.js from teams.js -->
       </section>
+
+      <div class="favorites-bar">
+        <p class="favorites-hint">Account required · your favorites show first</p>
+        <button type="button" class="btn favorites-edit-btn" id="editFavoritesBtn">
+          Edit favorites
+        </button>
+      </div>
+
+      <div id="favoritesPanel" class="favorites-panel" hidden>
+        <div class="favorites-panel-card" role="dialog" aria-modal="true" aria-labelledby="favoritesPanelTitle">
+          <div class="favorites-panel-head">
+            <h2 id="favoritesPanelTitle" class="favorites-panel-title">Your favorites</h2>
+            <button type="button" class="btn favorites-close-btn" id="favoritesCloseBtn" aria-label="Close">
+              Close
+            </button>
+          </div>
+          <p class="favorites-panel-note" id="favoritesPanelNote">
+            Pick up to 12 teams (about 8 is ideal). They show first in the picker.
+          </p>
+          <div id="favoritesList" class="favorites-list" role="group" aria-label="Favorite teams"></div>
+          <p id="favoritesError" class="favorites-error" role="alert" hidden></p>
+          <div class="favorites-panel-actions">
+            <button type="button" class="btn btn-cta favorites-save-btn" id="favoritesSaveBtn">
+              Save favorites
+            </button>
+            <button type="button" class="btn favorites-later-btn" id="favoritesLaterBtn" hidden>
+              Maybe later
+            </button>
+          </div>
+        </div>
+      </div>
 
       <section class="delay-readout" aria-label="Current delay">
         <div id="delayValue" class="delay-value">Live</div>
@@ -130,6 +161,6 @@
   <script src="usage.js"></script>
   <script src="schedule.js"></script>
   <script src="player-boot.js"></script>
-  <script src="support-chat.js?v=helpmin2"></script>
+  <script src="support-chat.js?v=fav1"></script>
 </body>
 </html>

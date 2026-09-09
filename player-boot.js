@@ -143,7 +143,7 @@
 
   async function requireSessionOrRedirect(nextPage) {
     const session = await getSession();
-    if (!session || !session.user) {
+    if (!session || !session.access_token || !session.user) {
       const next = nextPage || "player.html";
       location.replace("login.html?next=" + encodeURIComponent(next));
       return null;
@@ -194,6 +194,79 @@
     };
   }
 
+  function normalizeFavoriteIds(raw) {
+    if (!Array.isArray(raw)) return [];
+    const out = [];
+    const seen = new Set();
+    for (const item of raw) {
+      const id = String(item || "").trim();
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      out.push(id);
+    }
+    return out;
+  }
+
+  /** Load ordered favorite team slugs from profiles.favorite_team_ids. */
+  async function fetchFavoriteTeamIds() {
+    const session = await getSession();
+    if (!session || !session.access_token || !session.user) {
+      return { ids: [], empty: true };
+    }
+    const uid = session.user.id;
+    const url =
+      SUPABASE_URL +
+      "/rest/v1/profiles?select=favorite_team_ids&id=eq." +
+      encodeURIComponent(uid) +
+      "&limit=1";
+    const res = await fetch(url, {
+      headers: authHeaders({
+        Authorization: "Bearer " + session.access_token,
+      }),
+    });
+    if (!res.ok) return { ids: [], empty: true };
+    const rows = await res.json().catch(() => []);
+    if (!Array.isArray(rows) || !rows.length) {
+      return { ids: [], empty: true };
+    }
+    const ids = normalizeFavoriteIds(rows[0] && rows[0].favorite_team_ids);
+    return { ids, empty: ids.length === 0 };
+  }
+
+  /** Persist ordered favorite team slugs (1–12). Users may UPDATE own profile. */
+  async function updateFavoriteTeamIds(ids) {
+    const session = await getSession();
+    if (!session || !session.access_token || !session.user) {
+      throw new Error("Sign in required");
+    }
+    const cleaned = normalizeFavoriteIds(ids).slice(0, 12);
+    const uid = session.user.id;
+    const url =
+      SUPABASE_URL +
+      "/rest/v1/profiles?id=eq." +
+      encodeURIComponent(uid);
+    const res = await fetch(url, {
+      method: "PATCH",
+      headers: authHeaders({
+        Authorization: "Bearer " + session.access_token,
+        Prefer: "return=representation",
+      }),
+      body: JSON.stringify({ favorite_team_ids: cleaned }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(
+        data.message || data.error_description || data.msg || "Could not save favorites"
+      );
+    }
+    const rows = await res.json().catch(() => []);
+    const saved =
+      Array.isArray(rows) && rows[0]
+        ? normalizeFavoriteIds(rows[0].favorite_team_ids)
+        : cleaned;
+    return saved;
+  }
+
   window.PlayDelayAuth = {
     getSession,
     getUser,
@@ -205,6 +278,8 @@
     FREE_UNTIL_ISO,
     isFreeWeekend,
     fetchProfileCredits,
+    fetchFavoriteTeamIds,
+    updateFavoriteTeamIds,
   };
 })();
 /**

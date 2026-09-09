@@ -2403,3 +2403,160 @@ body[data-team]:not([data-team="byu"]):not([data-team="utah"]):not([data-team="a
     ),
     url("assets/env-stadium-night.jpg");
 }
+
+
+/* ——— Favorites editor (player) ——— */
+
+.favorites-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 14px;
+  margin: 4px 0 2px;
+}
+
+.favorites-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+  line-height: 1.35;
+  flex: 1 1 12rem;
+}
+
+.favorites-edit-btn {
+  min-height: 56px;
+  padding: 10px 16px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  border-width: 2px;
+  background: var(--bg-elevated, var(--bg-button));
+  color: var(--white);
+  flex: 0 0 auto;
+}
+
+.favorites-edit-btn:focus-visible {
+  outline: 3px solid var(--accent-soft);
+  outline-offset: 2px;
+}
+
+.favorites-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px;
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  background: rgba(4, 8, 16, 0.72);
+  backdrop-filter: blur(4px);
+}
+
+.favorites-panel[hidden] {
+  display: none !important;
+}
+
+.favorites-panel-card {
+  width: min(560px, 100%);
+  max-height: min(88vh, 720px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  background: var(--team-elevated, var(--bg-elevated, #122038));
+  border: 2px solid var(--team-border, rgba(240, 193, 75, 0.18));
+  border-radius: 18px;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+  padding: 16px 16px 18px;
+}
+
+.favorites-panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.favorites-panel-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: var(--white);
+}
+
+.favorites-close-btn {
+  min-height: 48px;
+  padding: 8px 14px;
+  font-weight: 700;
+  background: var(--bg-button);
+  color: var(--white);
+  border-width: 2px;
+}
+
+.favorites-panel-note {
+  margin: 0 0 12px;
+  font-size: 0.92rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.favorites-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.favorites-toggle {
+  min-height: 64px;
+}
+
+.favorites-error {
+  margin: 0 0 10px;
+  color: #ffb4b4;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.favorites-panel-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.favorites-save-btn,
+.favorites-later-btn {
+  min-height: 56px;
+  width: 100%;
+  font-size: 1.08rem;
+  font-weight: 800;
+}
+
+.favorites-later-btn {
+  background: transparent;
+  border-width: 2px;
+  color: var(--white);
+}
+
+body.favorites-panel-open {
+  overflow: hidden;
+}
+
+@media (min-width: 720px) {
+  .favorites-panel {
+    align-items: center;
+  }
+
+  .favorites-list {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 420px) {
+  .favorites-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

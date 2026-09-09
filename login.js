@@ -29,8 +29,8 @@
     const isUp = m === "signup";
     title.textContent = isUp ? "Create account" : "Sign in";
     note.textContent = isUp
-      ? "Create an account with email and password (min 6 characters), then open the player."
-      : "Use your email and password to open the player. Free while we test.";
+      ? "Create an account (min 6 character password). Your favorites show first in the player."
+      : "Account required; your favorites show first. Free while we test.";
     submitBtn.textContent = isUp ? "Create account" : "Sign in";
     password.autocomplete = isUp ? "new-password" : "current-password";
     tabSignIn.classList.toggle("is-active", !isUp);
