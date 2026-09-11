@@ -1,7 +1,7 @@
 {
   "name": "PlayDelay",
   "short_name": "PlayDelay",
-  "description": "PlayDelay — Big 12 + Miami + USC schedules; radio sync for nearly every team (Kansas State coming soon).",
+  "description": "PlayDelay — Big 12, Big Ten & ACC schedules; radio sync for nearly every team (Kansas State coming soon).",
   "start_url": "./player.html",
   "display": "standalone",
   "background_color": "#0a1628",
