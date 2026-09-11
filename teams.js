@@ -401,6 +401,29 @@
         themeColor: "#1a0c0c",
       },
     },
+    nebraska: {
+      id: "nebraska",
+      espnId: "158",
+      label: "Nebraska",
+      shortLabel: "NEB",
+      station: "1400 & 99.3 KLIN",
+      streamUrl: "https://playerservices.streamtheworld.com/api/livestream-redirect/KLINAMAAC.aac",
+      accent: "nebraska",
+      title: "Nebraska · 1400 & 99.3 KLIN — PlayDelay",
+      shortTitle: "Nebraska Radio",
+      group: "bigten",
+      theme: {
+        primary: "#e31937",
+        bright: "#ff2a4a",
+        accent: "#ffffff",
+        bg: "#140808",
+        elevated: "#220e0e",
+        button: "#301414",
+        buttonHover: "#3e1a1a",
+        border: "rgba(227, 25, 55, 0.24)",
+        themeColor: "#140808",
+      },
+    },
     miami: {
       id: "miami",
       espnId: "2390",
@@ -452,7 +475,7 @@
     "utah",
     "west_virginia",
   ];
-  const BIGTEN_ORDER = ["usc"];
+  const BIGTEN_ORDER = ["nebraska", "usc"];
   const ACC_ORDER = ["miami"];
 
   /** Conference display order for pickers / chips (favorites is UI-only). */
