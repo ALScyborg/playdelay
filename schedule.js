@@ -35,6 +35,7 @@
       byu: { id: "byu", espnId: "252", label: "BYU", group: "big12" },
       utah: { id: "utah", espnId: "254", label: "Utah", group: "big12" },
       asu: { id: "asu", espnId: "9", label: "ASU", group: "big12" },
+      nebraska: { id: "nebraska", espnId: "158", label: "Nebraska", group: "bigten" },
       usc: { id: "usc", espnId: "30", label: "USC", group: "bigten" },
     };
 
@@ -586,7 +587,7 @@
       sectionNote.textContent =
         sport === "mbb"
           ? "2025-26 men’s basketball via ESPN. Pick a team for colors + schedule. Radio sync uses each team’s flagship station when available."
-          : "2026 football via ESPN. Pick a Big 12 / Miami / USC team for colors + schedule (saved for next visit).";
+          : "2026 football via ESPN. Pick a Big 12 / Big Ten / ACC team for colors + schedule (saved for next visit).";
     }
 
     const active = readLandingTeam();
