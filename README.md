@@ -1,6 +1,6 @@
-# PlayDelay (Big 12 + Miami + USC)
+# PlayDelay (Big 12 + Big Ten + ACC)
 
-Landing + delay player for the full **Big 12**, plus **Miami** and **USC**. Football & men’s basketball schedules via ESPN. **Radio live** for nearly every team — **Kansas State** stays coming-soon (SurferNetwork JWT). **Free for now:** create a Supabase account, sign in, pick a team, then play.
+Landing + delay player for the full **Big 12**, Big Ten (**Nebraska**, **USC**), and ACC (**Miami**). Football & men’s basketball schedules via ESPN. **Radio live** for nearly every team — **Kansas State** stays coming-soon (SurferNetwork JWT). **Free for now:** create a Supabase account, sign in, pick a team, then play.
 
 - Live (GitHub Pages): https://alscyborg.github.io/playdelay/
 - Custom domain: https://playdelay.app/
@@ -16,7 +16,7 @@ Landing + delay player for the full **Big 12**, plus **Miami** and **USC**. Foot
 - Supabase project ref: `itcgsbzcopdkccobcfha`
 - Frontend uses the public anon key only (see `supabase-auth.js` / `usage.js`)
 - Session stored in `localStorage` (`playdelay.supabase.session`)
-- Last team stored in `localStorage` (`playdelay.lastTeam`) — accepts all Big 12 / Miami / USC ids
+- Last team stored in `localStorage` (`playdelay.lastTeam`) — accepts all Big 12 / Big Ten / ACC ids
 - Last sport stored in `localStorage` (`playdelay.lastSport`: `football` | `mbb`)
 - Anonymous usage session id: `playdelay.sessionId`
 - Auth is email/password via Supabase Auth HTTP API (no PIN)
@@ -51,4 +51,5 @@ python3 -m http.server 8765
 - Do not put service-role or Stripe secret keys in this repo.
 - ASU (KMVP): game-day geo blackouts may apply outside Phoenix; the continuous mount may still work.
 - USC (KSPN): Amperwave redirects with session tokens — keep the stable `live.amperwave.net/direct/...` URL only.
+- Nebraska (KLIN): StreamTheWorld `KLINAMAAC.aac` redirect (same pattern as Arizona KCUB).
 - Teams with `streamUrl: null` (currently Kansas State) show a coming-soon banner; Play enables wherever a stream is set.
