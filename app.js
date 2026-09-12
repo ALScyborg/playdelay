@@ -52,6 +52,9 @@
   let workletFailed = false;
   let workletFailReason = "";
   let isPlaying = false;
+  /** Bumped to cancel in-flight play() / startWorkletPlay after Pause. */
+  let playOp = 0;
+  let playInFlight = false;
   let toastTimer = 0;
   let silenceWatch = 0;
   let workletModuleLoaded = false;
@@ -102,8 +105,7 @@
     playBtn.disabled = !ok;
     playBtn.setAttribute("aria-disabled", ok ? "false" : "true");
     if (!ok) {
-      playBtn.setAttribute("aria-pressed", "false");
-      playBtn.textContent = "Play";
+      setPlayUi(false);
       setStatus("idle", "Soon");
       showBanner(
         currentTeam.label +
@@ -753,8 +755,31 @@
       isPlaying &&
       !switchingTeam &&
       !reconnecting &&
+      !playInFlight &&
       hasStream()
     );
+  }
+
+  function nextPlayOp() {
+    playOp += 1;
+    return playOp;
+  }
+
+  function isLivePlayOp(op) {
+    return op === playOp;
+  }
+
+  function assertPlayOp(op) {
+    if (op != null && !isLivePlayOp(op)) {
+      const err = new Error("play-aborted");
+      err.name = "PlayAborted";
+      throw err;
+    }
+  }
+
+  function setPlayUi(playing) {
+    playBtn.setAttribute("aria-pressed", playing ? "true" : "false");
+    playBtn.textContent = playing ? "Pause" : "Play";
   }
 
   /**
@@ -768,6 +793,7 @@
       return false;
     }
 
+    const op = playOp;
     reconnecting = true;
     clearStallTimer();
     livePlaybackStarted = false;
@@ -779,8 +805,7 @@
     showToast("Reconnecting to live…");
     setStatus("loading", "Loading");
     showBanner("", false);
-    playBtn.setAttribute("aria-pressed", "true");
-    playBtn.textContent = "Pause";
+    setPlayUi(true);
 
     try {
       window.clearTimeout(silenceWatch);
@@ -790,20 +815,30 @@
         } catch (_) {}
       }
       await teardownGraph();
+      if (!isLivePlayOp(op) || !isPlaying) return false;
 
       // Prefer prior path: worklet if it had been working; else direct.
       try {
         if (!keptWorkletFailed) {
-          await startWorkletPlay();
+          await startWorkletPlay(op);
         } else {
-          await startDirectPlay(keptFailReason || reason);
+          await startDirectPlay(keptFailReason || reason, op);
         }
       } catch (err) {
+        if (err && err.name === "PlayAborted") return false;
         console.warn("Reconnect worklet/direct failed, trying direct", err);
         await startDirectPlay(
           reason ||
-            "Stream stalled. Reconnected with live playback."
+            "Stream stalled. Reconnected with live playback.",
+          op
         );
+      }
+
+      if (!isLivePlayOp(op) || !isPlaying) {
+        try {
+          if (audio) audio.pause();
+        } catch (_) {}
+        return false;
       }
 
       if (usingWorklet) {
@@ -816,13 +851,14 @@
       applyVolume();
 
       isPlaying = true;
-      playBtn.setAttribute("aria-pressed", "true");
-      playBtn.textContent = "Pause";
+      setPlayUi(true);
       setStatus("live", "Live");
       return true;
     } catch (err) {
+      if (err && err.name === "PlayAborted") return false;
       console.error("reconnectFresh", err);
       // Keep play intent when budget remains; retry shortly or give up at cap.
+      if (!isLivePlayOp(op) || !isPlaying) return false;
       if (reconnectBudgetExceeded()) {
         giveUpReconnect();
       } else {
@@ -845,11 +881,12 @@
   }
 
   function giveUpReconnect() {
+    nextPlayOp();
+    playInFlight = false;
     clearStallTimer();
     livePlaybackStarted = false;
     isPlaying = false;
-    playBtn.setAttribute("aria-pressed", "false");
-    playBtn.textContent = "Play";
+    setPlayUi(false);
     setStatus("error", "Error");
     showBanner("Stream error. Tap Play to retry.", true);
   }
@@ -1006,22 +1043,25 @@
       const level = rmsLevel();
       if (level < 0.01) {
         console.warn("Worklet path silent after hold (rms=" + level + "); falling back");
+        const op = playOp;
         const wasPlaying = isPlaying;
         try {
           await startDirectPlay(
-            "Stream blocked Web Audio (often CORS). Switched to live element playback so you still hear radio."
+            "Stream blocked Web Audio (often CORS). Switched to live element playback so you still hear radio.",
+            op
           );
-          if (wasPlaying) {
+          if (wasPlaying && isLivePlayOp(op) && isPlaying) {
             isPlaying = true;
-            playBtn.setAttribute("aria-pressed", "true");
-            playBtn.textContent = "Pause";
+            setPlayUi(true);
             setStatus("live", "Live");
             targetDelay = 0;
             displayDelay = 0;
             updateDelayUI();
           }
         } catch (e) {
+          if (e && e.name === "PlayAborted") return;
           console.error(e);
+          if (!isLivePlayOp(op)) return;
           setStatus("error", "Error");
           showBanner("Could not recover audio. Tap Play again.", true);
         }
@@ -1116,8 +1156,9 @@
     return Math.sqrt(sum / buf.length);
   }
 
-  async function startDirectPlay(reason) {
+  async function startDirectPlay(reason, op) {
     await teardownGraph();
+    assertPlayOp(op);
     workletFailed = true;
     workletFailReason =
       reason ||
@@ -1125,6 +1166,14 @@
     freshAudio(false);
     applyVolume();
     await audio.play();
+    try {
+      assertPlayOp(op);
+    } catch (err) {
+      try {
+        audio.pause();
+      } catch (_) {}
+      throw err;
+    }
     usingWorklet = false;
     showBanner(
       "Live sound on (no delay engine). Tap delay later if we get Web Audio working — or delay the TV when radio is behind.",
@@ -1132,8 +1181,9 @@
     );
   }
 
-  async function startWorkletPlay() {
+  async function startWorkletPlay(op) {
     await teardownGraph();
+    assertPlayOp(op);
     const Ctx = window.AudioContext || window.webkitAudioContext;
     if (!Ctx) throw new Error("No AudioContext");
 
@@ -1145,6 +1195,7 @@
       // New context needs the module again
       await audioCtx.audioWorklet.addModule(WORKLET_URL);
     }
+    assertPlayOp(op);
 
     freshAudio(true);
     applyVolume();
@@ -1184,7 +1235,16 @@
     if (targetDelay > 0.05) armDelayHold();
 
     if (audioCtx.state === "suspended") await audioCtx.resume();
+    assertPlayOp(op);
     await audio.play();
+    try {
+      assertPlayOp(op);
+    } catch (err) {
+      try {
+        audio.pause();
+      } catch (_) {}
+      throw err;
+    }
 
     // If graph is silent (CORS / empty buffers), fall back to direct play.
     window.clearTimeout(silenceWatch);
@@ -1193,22 +1253,25 @@
       const level = rmsLevel();
       if (level < 0.01) {
         console.warn("Worklet path silent (rms=" + level + "); falling back");
+        const op = playOp;
         const wasPlaying = isPlaying;
         try {
           await startDirectPlay(
-            "Stream blocked Web Audio (often CORS). Switched to live element playback so you still hear radio."
+            "Stream blocked Web Audio (often CORS). Switched to live element playback so you still hear radio.",
+            op
           );
-          if (wasPlaying) {
+          if (wasPlaying && isLivePlayOp(op) && isPlaying) {
             isPlaying = true;
-            playBtn.setAttribute("aria-pressed", "true");
-            playBtn.textContent = "Pause";
+            setPlayUi(true);
             setStatus("live", "Live");
             targetDelay = 0;
             displayDelay = 0;
             updateDelayUI();
           }
         } catch (e) {
+          if (e && e.name === "PlayAborted") return;
           console.error(e);
+          if (!isLivePlayOp(op)) return;
           setStatus("error", "Error");
           showBanner("Could not recover audio. Tap Play again.", true);
         }
@@ -1222,24 +1285,40 @@
       showToast(currentTeam.label + " radio stream coming soon");
       return;
     }
+    const op = nextPlayOp();
+    playInFlight = true;
     setStatus("loading", "Loading");
-    playBtn.disabled = true;
+    // Keep Play enabled across awaits (Neuralink / big-tap must stay live).
     showBanner("", false);
 
     try {
       // Prefer delay engine first; silence watchdog falls back to direct audio.
       try {
-        await startWorkletPlay();
+        await startWorkletPlay(op);
       } catch (err) {
+        if (err && err.name === "PlayAborted") {
+          try {
+            if (audio) audio.pause();
+          } catch (_) {}
+          return;
+        }
         console.warn("Worklet play failed, direct fallback", err);
         await startDirectPlay(
-          "Could not start delay engine. Playing live radio without delay."
+          "Could not start delay engine. Playing live radio without delay.",
+          op
         );
       }
 
+      if (!isLivePlayOp(op)) {
+        try {
+          if (audio) audio.pause();
+        } catch (_) {}
+        return;
+      }
+
       isPlaying = true;
-      playBtn.setAttribute("aria-pressed", "true");
-      playBtn.textContent = "Pause";
+      playInFlight = false;
+      setPlayUi(true);
       setStatus("live", "Live");
       reconnectAttemptAt = [];
       trackUsage("play", currentTeam);
@@ -1249,36 +1328,43 @@
         updateDelayUI();
       }
     } catch (err) {
+      if (err && err.name === "PlayAborted") return;
       console.error(err);
+      if (!isLivePlayOp(op)) return;
       isPlaying = false;
-      playBtn.setAttribute("aria-pressed", "false");
-      playBtn.textContent = "Play";
+      playInFlight = false;
+      setPlayUi(false);
       setStatus("error", "Error");
       showBanner(
         "Could not start the stream. Check connection and tap Play again.",
         true
       );
     } finally {
-      playBtn.disabled = false;
+      if (isLivePlayOp(op)) playInFlight = false;
     }
   }
 
   function pause() {
+    // Cancel in-flight play / reconnect completion; do not resurrect UI after Pause.
+    nextPlayOp();
+    playInFlight = false;
     window.clearTimeout(silenceWatch);
     clearStallTimer();
     livePlaybackStarted = false;
     lastMediaTime = NaN;
     delayHolding = false;
-    audio.pause();
+    try {
+      if (audio) audio.pause();
+    } catch (_) {}
     isPlaying = false;
-    playBtn.setAttribute("aria-pressed", "false");
-    playBtn.textContent = "Play";
+    setPlayUi(false);
     setStatus("paused", "Paused");
     trackUsage("stop", currentTeam);
   }
 
   async function togglePlay() {
-    if (isPlaying && !audio.paused) pause();
+    // In-flight play counts as Pause/cancel so rapid taps never stack play().
+    if (playInFlight || isPlaying || (audio && !audio.paused)) pause();
     else await play();
   }
 
@@ -1292,6 +1378,8 @@
     const keptDelay = targetDelay;
 
     try {
+      nextPlayOp();
+      playInFlight = false;
       window.clearTimeout(silenceWatch);
       clearStallTimer();
       livePlaybackStarted = false;
@@ -1303,8 +1391,7 @@
       }
       await teardownGraph();
       isPlaying = false;
-      playBtn.setAttribute("aria-pressed", "false");
-      playBtn.textContent = "Play";
+      setPlayUi(false);
       setStatus("idle", "Idle");
 
       currentTeam = next;
@@ -1386,8 +1473,8 @@
         setStatus("error", "Error");
         showBanner("Stream error. Tap Play to retry.", true);
         isPlaying = false;
-        playBtn.setAttribute("aria-pressed", "false");
-        playBtn.textContent = "Play";
+        playInFlight = false;
+        setPlayUi(false);
         return;
       }
       clearStallTimer();
