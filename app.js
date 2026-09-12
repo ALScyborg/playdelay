@@ -60,6 +60,8 @@
   let livePlaybackStarted = false;
   let stallTimer = 0;
   let lastMediaTime = NaN;
+  /** True while worklet is filling ring after armHold (output muted). */
+  let delayHolding = false;
   /** @type {number[]} */
   let reconnectAttemptAt = [];
   const STALL_RECONNECT_MS = 1000;
@@ -809,6 +811,7 @@
         displayDelay = keptDelay;
         sendDelayToWorklet(keptDelay);
         updateDelayUI();
+        if (keptDelay > 0.05) armDelayHold();
       }
       applyVolume();
 
@@ -955,7 +958,8 @@
     const vol = Number(volumeEl.value);
     const muted = muteBtn.getAttribute("aria-pressed") === "true";
     if (usingWorklet && gainNode && audioCtx) {
-      gainNode.gain.value = muted ? 0 : vol;
+      // Hold mute wins over UI volume so reconnect fill does not leak live.
+      gainNode.gain.value = muted || delayHolding ? 0 : vol;
       audio.muted = false; // MES routes to graph; do not mute element (silences input in some browsers)
       audio.volume = 1;
     } else {
@@ -973,6 +977,56 @@
   function sendDelayToWorklet(seconds) {
     if (!delayNode) return;
     delayNode.port.postMessage({ type: "setDelay", seconds });
+  }
+
+  /** Pin delayed sync: fill ring under silence so reconnect does not leak live. */
+  function armDelayHold() {
+    if (!delayNode || !usingWorklet) return;
+    delayNode.port.postMessage({ type: "armHold" });
+    delayHolding = true;
+    if (gainNode) gainNode.gain.value = 0;
+  }
+
+  function releaseDelayHold(current) {
+    if (typeof current === "number") {
+      displayDelay = current;
+      updateDelayUI();
+    }
+    if (!delayHolding) return;
+    delayHolding = false;
+    applyVolume();
+    if (isPlaying) {
+      showToast("Synced");
+      setStatus("live", "Live");
+    }
+    // CORS silence check was skipped while holding — re-arm briefly.
+    window.clearTimeout(silenceWatch);
+    silenceWatch = window.setTimeout(async () => {
+      if (!isPlaying || !usingWorklet || delayHolding) return;
+      const level = rmsLevel();
+      if (level < 0.01) {
+        console.warn("Worklet path silent after hold (rms=" + level + "); falling back");
+        const wasPlaying = isPlaying;
+        try {
+          await startDirectPlay(
+            "Stream blocked Web Audio (often CORS). Switched to live element playback so you still hear radio."
+          );
+          if (wasPlaying) {
+            isPlaying = true;
+            playBtn.setAttribute("aria-pressed", "true");
+            playBtn.textContent = "Pause";
+            setStatus("live", "Live");
+            targetDelay = 0;
+            displayDelay = 0;
+            updateDelayUI();
+          }
+        } catch (e) {
+          console.error(e);
+          setStatus("error", "Error");
+          showBanner("Could not recover audio. Tap Play again.", true);
+        }
+      }
+    }, 2000);
   }
 
   function rememberDelayPreference(seconds) {
@@ -1024,6 +1078,7 @@
 
   async function teardownGraph() {
     window.clearTimeout(silenceWatch);
+    delayHolding = false;
     try {
       if (sourceNode) sourceNode.disconnect();
     } catch (_) {}
@@ -1109,6 +1164,10 @@
       if (data.type === "delay" && typeof data.current === "number") {
         displayDelay = data.current;
         updateDelayUI();
+      } else if (data.type === "filled") {
+        releaseDelayHold(
+          typeof data.current === "number" ? data.current : undefined
+        );
       }
     };
 
@@ -1121,6 +1180,8 @@
     workletFailed = false;
     sendDelayToWorklet(targetDelay);
     applyVolume();
+    // First start with delay: fill ring under silence so live does not leak.
+    if (targetDelay > 0.05) armDelayHold();
 
     if (audioCtx.state === "suspended") await audioCtx.resume();
     await audio.play();
@@ -1128,7 +1189,7 @@
     // If graph is silent (CORS / empty buffers), fall back to direct play.
     window.clearTimeout(silenceWatch);
     silenceWatch = window.setTimeout(async () => {
-      if (!isPlaying || !usingWorklet) return;
+      if (!isPlaying || !usingWorklet || delayHolding) return;
       const level = rmsLevel();
       if (level < 0.01) {
         console.warn("Worklet path silent (rms=" + level + "); falling back");
@@ -1207,6 +1268,7 @@
     clearStallTimer();
     livePlaybackStarted = false;
     lastMediaTime = NaN;
+    delayHolding = false;
     audio.pause();
     isPlaying = false;
     playBtn.setAttribute("aria-pressed", "false");

@@ -10,10 +10,13 @@
  *
  * Messages from the main thread:
  *   { type: "setDelay", seconds: number }   -> set target delay
+ *   { type: "armHold", seconds?: number }   -> clear buffer, pin delay, hold
+ *                                            silence until ring is filled
  *   { type: "reset" }                        -> clear buffer, delay -> 0
  *
  * Messages to the main thread:
  *   { type: "delay", current: number }       -> ~10x/sec, the live delay value
+ *   { type: "filled", current: number }      -> hold released; buffer ready
  */
 
 const MAX_DELAY_SECONDS = 120;
@@ -32,6 +35,8 @@ class DelayProcessor extends AudioWorkletProcessor {
     this.writePos = 0;
     this.targetDelaySamples = 0;
     this.currentDelaySamples = 0;
+    this.filledSamples = 0;
+    this.holding = false;
 
     // Fine-adjust ramp (~15% varispeed). Big preset jumps snap (see setDelay)
     // so 8s/10s feels instant instead of crawling for minutes at 2%.
@@ -50,10 +55,22 @@ class DelayProcessor extends AudioWorkletProcessor {
         if (jump > sampleRate * 1.5) {
           this.currentDelaySamples = next;
         }
+      } else if (data.type === "armHold") {
+        if (typeof data.seconds === "number") {
+          const seconds = Math.max(0, Math.min(MAX_DELAY_SECONDS, data.seconds));
+          this.targetDelaySamples = seconds * sampleRate;
+        }
+        this.currentDelaySamples = this.targetDelaySamples;
+        this.holding = true;
+        this.filledSamples = 0;
+        this.writePos = 0;
+        for (const buf of this.buffers) buf.fill(0);
       } else if (data.type === "reset") {
         this.targetDelaySamples = 0;
         this.currentDelaySamples = 0;
         this.writePos = 0;
+        this.filledSamples = 0;
+        this.holding = false;
         for (const buf of this.buffers) buf.fill(0);
       }
     };
@@ -88,6 +105,13 @@ class DelayProcessor extends AudioWorkletProcessor {
       const frac = readPosF - readIdx;
       const nextIdx = (readIdx + 1) % this.capacity;
 
+      // While holding: keep writing into the ring, but emit silence until
+      // we have buffered at least targetDelaySamples of real audio.
+      const holdOut =
+        this.holding &&
+        this.targetDelaySamples > 0 &&
+        this.filledSamples < this.targetDelaySamples;
+
       for (let ch = 0; ch < channels; ch++) {
         const buf = this.buffers[ch] || this.buffers[0];
 
@@ -101,12 +125,30 @@ class DelayProcessor extends AudioWorkletProcessor {
         const sample = inChannel ? inChannel[i] : 0;
         buf[this.writePos] = sample;
 
-        // Read the delayed sample with linear interpolation.
-        const delayed = buf[readIdx] * (1 - frac) + buf[nextIdx] * frac;
-        output[ch][i] = delayed;
+        if (holdOut) {
+          output[ch][i] = 0;
+        } else {
+          // Read the delayed sample with linear interpolation.
+          const delayed = buf[readIdx] * (1 - frac) + buf[nextIdx] * frac;
+          output[ch][i] = delayed;
+        }
       }
 
       this.writePos = (this.writePos + 1) % this.capacity;
+
+      if (this.holding) {
+        this.filledSamples++;
+        if (
+          this.targetDelaySamples <= 0 ||
+          this.filledSamples >= this.targetDelaySamples
+        ) {
+          this.holding = false;
+          this.port.postMessage({
+            type: "filled",
+            current: this.currentDelaySamples / sampleRate,
+          });
+        }
+      }
     }
 
     // Report the live delay back to the UI ~10 times per second.
