@@ -52,4 +52,5 @@ python3 -m http.server 8765
 - ASU (KMVP): game-day geo blackouts may apply outside Phoenix; the continuous mount may still work.
 - USC (KSPN): Amperwave redirects with session tokens — keep the stable `live.amperwave.net/direct/...` URL only.
 - Nebraska (KLIN): StreamTheWorld `KLINAMAAC.aac` redirect (same pattern as Arizona KCUB).
+- Live streams auto-reconnect on stall/error (fresh Amperwave session URL, seek-to-live when seekable); capped at 5 attempts / 60s, then the usual error banner.
 - Teams with `streamUrl: null` (currently Kansas State) show a coming-soon banner; Play enables wherever a stream is set.

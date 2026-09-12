@@ -56,6 +56,15 @@
   let silenceWatch = 0;
   let workletModuleLoaded = false;
   let switchingTeam = false;
+  let reconnecting = false;
+  let livePlaybackStarted = false;
+  let stallTimer = 0;
+  let lastMediaTime = NaN;
+  /** @type {number[]} */
+  let reconnectAttemptAt = [];
+  const STALL_RECONNECT_MS = 1000;
+  const RECONNECT_MAX = 5;
+  const RECONNECT_WINDOW_MS = 60000;
 
   function readStoredTeamId() {
     if (registry && typeof registry.readStoredTeamId === "function") {
@@ -697,6 +706,186 @@
     }
   }
 
+  function cacheBustStreamUrl(url) {
+    if (!url) return url;
+    const sep = url.indexOf("?") >= 0 ? "&" : "?";
+    return url + sep + "_=" + Date.now();
+  }
+
+  /** Seek near the live edge when the element is seekable; return true if seek applied. */
+  function seekToLiveEdge(el) {
+    try {
+      if (!el || !el.seekable || el.seekable.length === 0) return false;
+      const end = el.seekable.end(el.seekable.length - 1);
+      if (!Number.isFinite(end) || end <= 0) return false;
+      const target = Math.max(0, end - 0.25);
+      el.currentTime = target;
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function clearStallTimer() {
+    if (stallTimer) {
+      window.clearTimeout(stallTimer);
+      stallTimer = 0;
+    }
+  }
+
+  function pruneReconnectAttempts(now) {
+    const cutoff = now - RECONNECT_WINDOW_MS;
+    reconnectAttemptAt = reconnectAttemptAt.filter((t) => t >= cutoff);
+  }
+
+  function recordReconnectAttempt() {
+    const now = Date.now();
+    pruneReconnectAttempts(now);
+    if (reconnectAttemptAt.length >= RECONNECT_MAX) return false;
+    reconnectAttemptAt.push(now);
+    return true;
+  }
+
+  function shouldAutoReconnect() {
+    return (
+      isPlaying &&
+      !switchingTeam &&
+      !reconnecting &&
+      hasStream()
+    );
+  }
+
+  /**
+   * Full reconnect: tear down MediaElementSource / worklet like team-switch,
+   * attach a fresh cache-busted Amperwave URL, restore delay + volume, resume play.
+   */
+  async function reconnectFresh(reason) {
+    if (!shouldAutoReconnect()) return false;
+    if (!recordReconnectAttempt()) {
+      giveUpReconnect();
+      return false;
+    }
+
+    reconnecting = true;
+    clearStallTimer();
+    livePlaybackStarted = false;
+    lastMediaTime = NaN;
+    const keptDelay = targetDelay;
+    const keptWorkletFailed = workletFailed;
+    const keptFailReason = workletFailReason;
+
+    showToast("Reconnecting to live…");
+    setStatus("loading", "Loading");
+    showBanner("", false);
+    playBtn.setAttribute("aria-pressed", "true");
+    playBtn.textContent = "Pause";
+
+    try {
+      window.clearTimeout(silenceWatch);
+      if (audio) {
+        try {
+          audio.pause();
+        } catch (_) {}
+      }
+      await teardownGraph();
+
+      // Prefer prior path: worklet if it had been working; else direct.
+      try {
+        if (!keptWorkletFailed) {
+          await startWorkletPlay();
+        } else {
+          await startDirectPlay(keptFailReason || reason);
+        }
+      } catch (err) {
+        console.warn("Reconnect worklet/direct failed, trying direct", err);
+        await startDirectPlay(
+          reason ||
+            "Stream stalled. Reconnected with live playback."
+        );
+      }
+
+      if (usingWorklet) {
+        targetDelay = keptDelay;
+        displayDelay = keptDelay;
+        sendDelayToWorklet(keptDelay);
+        updateDelayUI();
+      }
+      applyVolume();
+
+      isPlaying = true;
+      playBtn.setAttribute("aria-pressed", "true");
+      playBtn.textContent = "Pause";
+      setStatus("live", "Live");
+      return true;
+    } catch (err) {
+      console.error("reconnectFresh", err);
+      // Keep play intent when budget remains; retry shortly or give up at cap.
+      if (reconnectBudgetExceeded()) {
+        giveUpReconnect();
+      } else {
+        setStatus("loading", "Loading");
+        window.setTimeout(() => {
+          if (isPlaying && !switchingTeam && !reconnecting && hasStream()) {
+            reconnectFresh(reason || "retry");
+          }
+        }, 750);
+      }
+      return false;
+    } finally {
+      reconnecting = false;
+    }
+  }
+
+  function reconnectBudgetExceeded() {
+    pruneReconnectAttempts(Date.now());
+    return reconnectAttemptAt.length >= RECONNECT_MAX;
+  }
+
+  function giveUpReconnect() {
+    clearStallTimer();
+    livePlaybackStarted = false;
+    isPlaying = false;
+    playBtn.setAttribute("aria-pressed", "false");
+    playBtn.textContent = "Play";
+    setStatus("error", "Error");
+    showBanner("Stream error. Tap Play to retry.", true);
+  }
+
+  /** Stall/waiting recovery: seek to live if possible, else full reconnect. */
+  async function recoverLivePlayback(reason) {
+    if (!shouldAutoReconnect() || !livePlaybackStarted) return;
+    if (reconnectBudgetExceeded()) {
+      giveUpReconnect();
+      return;
+    }
+
+    if (seekToLiveEdge(audio)) {
+      reconnectAttemptAt.push(Date.now());
+      showToast("Reconnecting to live…");
+      setStatus("loading", "Loading");
+      try {
+        if (audio.paused) await audio.play();
+      } catch (err) {
+        console.warn("seek-to-live play failed; full reconnect", err);
+        await reconnectFresh(reason || "seek-to-live failed");
+      }
+      return;
+    }
+
+    await reconnectFresh(reason || "stream stall");
+  }
+
+  function armStallReconnect() {
+    if (!shouldAutoReconnect() || !livePlaybackStarted) return;
+    if (stallTimer) return;
+    stallTimer = window.setTimeout(() => {
+      stallTimer = 0;
+      if (!shouldAutoReconnect() || !livePlaybackStarted) return;
+      // Still waiting/stalled if not making progress
+      recoverLivePlayback("waiting/stalled");
+    }, STALL_RECONNECT_MS);
+  }
+
   function freshAudio(crossOrigin) {
     const el = document.createElement("audio");
     el.id = "audio";
@@ -705,7 +894,7 @@
     el.setAttribute("playsinline", "");
     if (crossOrigin) el.crossOrigin = "anonymous";
     const url = streamUrl();
-    if (url) el.src = url;
+    if (url) el.src = cacheBustStreamUrl(url);
     // Replace previous element (MediaElementSource permanently captures one)
     if (audio && audio.parentNode) {
       audio.pause();
@@ -991,6 +1180,7 @@
       playBtn.setAttribute("aria-pressed", "true");
       playBtn.textContent = "Pause";
       setStatus("live", "Live");
+      reconnectAttemptAt = [];
       trackUsage("play", currentTeam);
       if (!usingWorklet) {
         targetDelay = 0;
@@ -1014,6 +1204,9 @@
 
   function pause() {
     window.clearTimeout(silenceWatch);
+    clearStallTimer();
+    livePlaybackStarted = false;
+    lastMediaTime = NaN;
     audio.pause();
     isPlaying = false;
     playBtn.setAttribute("aria-pressed", "false");
@@ -1038,6 +1231,9 @@
 
     try {
       window.clearTimeout(silenceWatch);
+      clearStallTimer();
+      livePlaybackStarted = false;
+      lastMediaTime = NaN;
       if (audio) {
         try {
           audio.pause();
@@ -1087,17 +1283,53 @@
 
   function wireAudioEvents(el) {
     el.addEventListener("waiting", () => {
-      if (isPlaying) setStatus("loading", "Loading");
+      if (!isPlaying || switchingTeam || reconnecting) return;
+      setStatus("loading", "Loading");
+      armStallReconnect();
+    });
+    el.addEventListener("stalled", () => {
+      if (!isPlaying || switchingTeam || reconnecting) return;
+      setStatus("loading", "Loading");
+      armStallReconnect();
     });
     el.addEventListener("playing", () => {
-      if (isPlaying) setStatus("live", "Live");
+      if (!isPlaying) return;
+      clearStallTimer();
+      livePlaybackStarted = true;
+      lastMediaTime = el.currentTime;
+      setStatus("live", "Live");
+    });
+    el.addEventListener("canplay", () => {
+      if (!isPlaying) return;
+      clearStallTimer();
+    });
+    el.addEventListener("timeupdate", () => {
+      if (!isPlaying) return;
+      const t = el.currentTime;
+      if (Number.isFinite(t) && (Number.isNaN(lastMediaTime) || t !== lastMediaTime)) {
+        lastMediaTime = t;
+        clearStallTimer();
+        livePlaybackStarted = true;
+      }
+    });
+    el.addEventListener("ended", () => {
+      if (!isPlaying || switchingTeam || reconnecting) return;
+      // Live mounts should not end; treat as drop and reconnect.
+      clearStallTimer();
+      reconnectFresh("ended");
     });
     el.addEventListener("error", () => {
-      setStatus("error", "Error");
-      showBanner("Stream error. Tap Play to retry.", true);
-      isPlaying = false;
-      playBtn.setAttribute("aria-pressed", "false");
-      playBtn.textContent = "Play";
+      if (switchingTeam || reconnecting) return;
+      if (!isPlaying || !hasStream()) {
+        setStatus("error", "Error");
+        showBanner("Stream error. Tap Play to retry.", true);
+        isPlaying = false;
+        playBtn.setAttribute("aria-pressed", "false");
+        playBtn.textContent = "Play";
+        return;
+      }
+      clearStallTimer();
+      reconnectFresh("error");
     });
   }
 
@@ -1146,7 +1378,7 @@
   trackUsage("select", currentTeam);
   // Initial element: prepare src without capturing yet
   audio.preload = "auto";
-  if (hasStream()) audio.src = streamUrl();
+  if (hasStream()) audio.src = cacheBustStreamUrl(streamUrl());
 
   document.addEventListener("keydown", (event) => {
     const tag = (event.target && event.target.tagName) || "";
