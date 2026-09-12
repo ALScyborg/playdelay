@@ -65,6 +65,9 @@
   let lastMediaTime = NaN;
   /** True while worklet is filling ring after armHold (output muted). */
   let delayHolding = false;
+  let holdWatch = 0;
+  let holdArmedAt = 0;
+  let holdToastShown = false;
   /** @type {number[]} */
   let reconnectAttemptAt = [];
   const STALL_RECONNECT_MS = 1000;
@@ -809,6 +812,7 @@
 
     try {
       window.clearTimeout(silenceWatch);
+      clearHoldWatch();
       if (audio) {
         try {
           audio.pause();
@@ -852,7 +856,8 @@
 
       isPlaying = true;
       setPlayUi(true);
-      setStatus("live", "Live");
+      if (delayHolding) setStatus("loading", "Loading");
+      else setStatus("live", "Live");
       return true;
     } catch (err) {
       if (err && err.name === "PlayAborted") return false;
@@ -1016,15 +1021,75 @@
     delayNode.port.postMessage({ type: "setDelay", seconds });
   }
 
+  function clearHoldWatch() {
+    window.clearTimeout(holdWatch);
+    holdWatch = 0;
+  }
+
+  /** Shared silent-graph → direct element fallback (CORS / empty MES). */
+  async function fallbackSilentWorklet(logLabel) {
+    const level = rmsLevel();
+    if (level >= 0.01) return false;
+    console.warn(
+      logLabel + " (rms=" + level + "); falling back to direct play"
+    );
+    const op = playOp;
+    const wasPlaying = isPlaying;
+    try {
+      await startDirectPlay(
+        "Stream blocked Web Audio (often CORS). Switched to live element playback so you still hear radio.",
+        op
+      );
+      if (wasPlaying && isLivePlayOp(op) && isPlaying) {
+        isPlaying = true;
+        setPlayUi(true);
+        setStatus("live", "Live");
+        targetDelay = 0;
+        displayDelay = 0;
+        updateDelayUI();
+      }
+      return true;
+    } catch (e) {
+      if (e && e.name === "PlayAborted") return true;
+      console.error(e);
+      if (!isLivePlayOp(op)) return true;
+      setStatus("error", "Error");
+      showBanner("Could not recover audio. Tap Play again.", true);
+      return true;
+    }
+  }
+
   /** Pin delayed sync: fill ring under silence so reconnect does not leak live. */
   function armDelayHold() {
-    if (!delayNode || !usingWorklet) return;
+    // Live (0s) must never arm — callers guard, this is belt-and-suspenders.
+    if (!delayNode || !usingWorklet || targetDelay <= 0.05) return;
     delayNode.port.postMessage({ type: "armHold" });
     delayHolding = true;
+    holdArmedAt = Date.now();
     if (gainNode) gainNode.gain.value = 0;
+    setStatus("loading", "Loading");
+    if (!holdToastShown) {
+      holdToastShown = true;
+      showToast("Building delay…");
+    }
+    clearHoldWatch();
+    const holdMs = Math.max(targetDelay, 0.5) * 1000 + 2500;
+    holdWatch = window.setTimeout(() => {
+      void onHoldWatchFire();
+    }, holdMs);
+  }
+
+  async function onHoldWatchFire() {
+    holdWatch = 0;
+    if (!delayHolding || !isPlaying) return;
+    console.warn("Delay hold timed out without filled; releasing");
+    releaseDelayHold();
+    // Prefer direct if still silent after unmute; else keep worklet unmuted.
+    await fallbackSilentWorklet("Worklet path silent after hold timeout");
   }
 
   function releaseDelayHold(current) {
+    clearHoldWatch();
     if (typeof current === "number") {
       displayDelay = current;
       updateDelayUI();
@@ -1036,36 +1101,16 @@
       showToast("Synced");
       setStatus("live", "Live");
     }
-    // CORS silence check was skipped while holding — re-arm briefly.
+    // Re-arm silence check now that hold mute is lifted.
     window.clearTimeout(silenceWatch);
     silenceWatch = window.setTimeout(async () => {
-      if (!isPlaying || !usingWorklet || delayHolding) return;
-      const level = rmsLevel();
-      if (level < 0.01) {
-        console.warn("Worklet path silent after hold (rms=" + level + "); falling back");
-        const op = playOp;
-        const wasPlaying = isPlaying;
-        try {
-          await startDirectPlay(
-            "Stream blocked Web Audio (often CORS). Switched to live element playback so you still hear radio.",
-            op
-          );
-          if (wasPlaying && isLivePlayOp(op) && isPlaying) {
-            isPlaying = true;
-            setPlayUi(true);
-            setStatus("live", "Live");
-            targetDelay = 0;
-            displayDelay = 0;
-            updateDelayUI();
-          }
-        } catch (e) {
-          if (e && e.name === "PlayAborted") return;
-          console.error(e);
-          if (!isLivePlayOp(op)) return;
-          setStatus("error", "Error");
-          showBanner("Could not recover audio. Tap Play again.", true);
-        }
+      if (!isPlaying || !usingWorklet) return;
+      if (delayHolding) {
+        // Should be rare post-release; treat prolonged hold as stuck.
+        if (Date.now() - holdArmedAt < 1500) return;
+        releaseDelayHold();
       }
+      await fallbackSilentWorklet("Worklet path silent after hold");
     }, 2000);
   }
 
@@ -1118,7 +1163,10 @@
 
   async function teardownGraph() {
     window.clearTimeout(silenceWatch);
+    clearHoldWatch();
     delayHolding = false;
+    holdArmedAt = 0;
+    holdToastShown = false;
     try {
       if (sourceNode) sourceNode.disconnect();
     } catch (_) {}
@@ -1247,36 +1295,32 @@
     }
 
     // If graph is silent (CORS / empty buffers), fall back to direct play.
+    // Do not permanently skip while delayHolding — a stuck hold never gets
+    // "filled", and the old early-return left gain muted forever.
     window.clearTimeout(silenceWatch);
-    silenceWatch = window.setTimeout(async () => {
-      if (!isPlaying || !usingWorklet || delayHolding) return;
-      const level = rmsLevel();
-      if (level < 0.01) {
-        console.warn("Worklet path silent (rms=" + level + "); falling back");
-        const op = playOp;
-        const wasPlaying = isPlaying;
-        try {
-          await startDirectPlay(
-            "Stream blocked Web Audio (often CORS). Switched to live element playback so you still hear radio.",
-            op
-          );
-          if (wasPlaying && isLivePlayOp(op) && isPlaying) {
-            isPlaying = true;
-            setPlayUi(true);
-            setStatus("live", "Live");
-            targetDelay = 0;
-            displayDelay = 0;
-            updateDelayUI();
+    const armSilenceCheck = (delayMs) => {
+      silenceWatch = window.setTimeout(async () => {
+        if (!isPlaying || !usingWorklet) return;
+        if (delayHolding) {
+          const heldMs = Date.now() - holdArmedAt;
+          // Grace: legitimate fills need ~targetDelay; only force after that
+          // (at least ~1.5s). Hold watchdog is the hard backstop.
+          const graceMs = Math.max(1500, targetDelay * 1000 + 500);
+          if (heldMs < graceMs) {
+            armSilenceCheck(Math.min(500, graceMs - heldMs + 50));
+            return;
           }
-        } catch (e) {
-          if (e && e.name === "PlayAborted") return;
-          console.error(e);
-          if (!isLivePlayOp(op)) return;
-          setStatus("error", "Error");
-          showBanner("Could not recover audio. Tap Play again.", true);
+          console.warn(
+            "Silence watchdog: hold >" +
+              Math.round(heldMs) +
+              "ms with no filled; releasing"
+          );
+          releaseDelayHold();
         }
-      }
-    }, 2000);
+        await fallbackSilentWorklet("Worklet path silent");
+      }, delayMs);
+    };
+    armSilenceCheck(2000);
   }
 
   async function play() {
@@ -1319,7 +1363,8 @@
       isPlaying = true;
       playInFlight = false;
       setPlayUi(true);
-      setStatus("live", "Live");
+      if (delayHolding) setStatus("loading", "Loading");
+      else setStatus("live", "Live");
       reconnectAttemptAt = [];
       trackUsage("play", currentTeam);
       if (!usingWorklet) {
@@ -1349,10 +1394,13 @@
     nextPlayOp();
     playInFlight = false;
     window.clearTimeout(silenceWatch);
+    clearHoldWatch();
     clearStallTimer();
     livePlaybackStarted = false;
     lastMediaTime = NaN;
     delayHolding = false;
+    holdArmedAt = 0;
+    holdToastShown = false;
     try {
       if (audio) audio.pause();
     } catch (_) {}
