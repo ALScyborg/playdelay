@@ -67,7 +67,7 @@
 
   /**
    * @param {"select"|"play"|"stop"|"schedule_view"} eventType
-   * @param {{ team_id?: string, team_label?: string, sport?: string, user_id?: string|null }} [extra]
+   * @param {{ team_id?: string, team_label?: string, sport?: string, user_id?: string|null, duration_seconds?: number }} [extra]
    */
   function track(eventType, extra) {
     try {
@@ -83,6 +83,14 @@
         page_url: typeof location !== "undefined" ? location.href : "",
         user_agent: typeof navigator !== "undefined" ? navigator.userAgent : "",
       };
+      if (
+        extra &&
+        typeof extra.duration_seconds === "number" &&
+        Number.isFinite(extra.duration_seconds) &&
+        extra.duration_seconds >= 0
+      ) {
+        payload.duration_seconds = Math.round(extra.duration_seconds);
+      }
       if (!payload.team_id) return;
 
       // Fire-and-forget — never block UI
