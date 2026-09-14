@@ -55,6 +55,8 @@
   /** Bumped to cancel in-flight play() / startWorkletPlay after Pause. */
   let playOp = 0;
   let playInFlight = false;
+  /** epoch ms when current listen segment started; 0 if not playing. */
+  let playStartedAt = 0;
   let toastTimer = 0;
   let silenceWatch = 0;
   let workletModuleLoaded = false;
@@ -144,14 +146,36 @@
     } catch (_) {}
   }
 
-  function trackUsage(eventType, team) {
+  function trackUsage(eventType, team, extra) {
     const u = window.PlayDelayUsage;
     if (!u || typeof u.track !== "function") return;
     const t = team || currentTeam;
-    u.track(eventType, {
+    const payload = {
       team_id: t.id,
       team_label: t.label,
-    });
+    };
+    if (extra && typeof extra === "object") {
+      if (
+        typeof extra.duration_seconds === "number" &&
+        Number.isFinite(extra.duration_seconds)
+      ) {
+        payload.duration_seconds = extra.duration_seconds;
+      }
+    }
+    u.track(eventType, payload);
+  }
+
+  function listenSecondsSoFar() {
+    if (!playStartedAt) return 0;
+    return Math.max(0, Math.round((Date.now() - playStartedAt) / 1000));
+  }
+
+  function flushListenStop(team) {
+    const secs = listenSecondsSoFar();
+    playStartedAt = 0;
+    const t = team || currentTeam;
+    if (!t) return;
+    trackUsage("stop", t, secs > 0 ? { duration_seconds: secs } : undefined);
   }
 
   function teamLogoHtml(espnId, size) {
@@ -1366,6 +1390,7 @@
       if (delayHolding) setStatus("loading", "Loading");
       else setStatus("live", "Live");
       reconnectAttemptAt = [];
+      if (!playStartedAt) playStartedAt = Date.now();
       trackUsage("play", currentTeam);
       if (!usingWorklet) {
         targetDelay = 0;
@@ -1407,7 +1432,7 @@
     isPlaying = false;
     setPlayUi(false);
     setStatus("paused", "Paused");
-    trackUsage("stop", currentTeam);
+    flushListenStop(currentTeam);
   }
 
   async function togglePlay() {
@@ -1596,6 +1621,17 @@
       event.preventDefault();
       setDelay(targetDelay - 1);
     }
+  });
+
+  function onLeaveWhilePlaying() {
+    if (!(playInFlight || isPlaying || (audio && !audio.paused) || playStartedAt)) {
+      return;
+    }
+    flushListenStop(currentTeam);
+  }
+  window.addEventListener("pagehide", onLeaveWhilePlaying);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") onLeaveWhilePlaying();
   });
 
   setStatus("idle", "Idle");
