@@ -1624,15 +1624,11 @@
   });
 
   function onLeaveWhilePlaying() {
-    if (!(playInFlight || isPlaying || (audio && !audio.paused) || playStartedAt)) {
-      return;
-    }
+    if (!playStartedAt) return;
+    if (!(isPlaying || playInFlight || (audio && !audio.paused))) return;
     flushListenStop(currentTeam);
   }
   window.addEventListener("pagehide", onLeaveWhilePlaying);
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") onLeaveWhilePlaying();
-  });
 
   setStatus("idle", "Idle");
   updateDelayUI();
