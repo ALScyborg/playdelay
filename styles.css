@@ -2639,3 +2639,41 @@ body.favorites-panel-open {
     max-width: 320px;
   }
 }
+
+
+/* Legal / AdSense placeholders — never overlay player controls */
+.legal-page .legal-main {{
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 2.5rem;
+  line-height: 1.55;
+}}
+.legal-page .legal-main h1 {{
+  font-size: 1.75rem;
+  margin: 0 0 0.5rem;
+}}
+.legal-page .legal-main h2 {{
+  font-size: 1.15rem;
+  margin: 1.5rem 0 0.5rem;
+}}
+.legal-page .legal-updated {{
+  opacity: 0.75;
+  font-size: 0.9rem;
+}}
+.pd-ad-wrap {{
+  margin: 1.25rem auto 0.5rem;
+  max-width: 42rem;
+  min-height: 0;
+  padding: 0 1rem;
+}}
+.pd-ad {{
+  min-height: 0;
+  border-radius: 10px;
+  overflow: hidden;
+}}
+.player-footer {{
+  margin-top: 0.5rem;
+  padding-bottom: 1.5rem;
+  text-align: center;
+  font-size: 0.85rem;
+}}
