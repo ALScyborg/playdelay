@@ -1,12 +1,12 @@
 /**
- * PlayDelay — shared team registry (Big 12, Big Ten, ACC).
+ * PlayDelay — shared team registry (Big 12, Big Ten, ACC, Independents).
  * Source of truth for ids, ESPN ids, streams, colors, conference groups.
  * Favorites is UI-only (user list) — not a TeamDef.group.
  */
 (() => {
   "use strict";
 
-  /** @typedef {{ id: string, espnId: string, label: string, shortLabel?: string, station: string, streamUrl: string|null, accent: string, title: string, shortTitle: string, group: "big12"|"bigten"|"acc", theme: { primary: string, bright: string, accent: string, bg: string, elevated: string, button: string, buttonHover: string, border: string, themeColor: string } }} TeamDef */
+  /** @typedef {{ id: string, espnId: string, label: string, shortLabel?: string, station: string, streamUrl: string|null, accent: string, title: string, shortTitle: string, group: "big12"|"bigten"|"acc"|"independent", theme: { primary: string, bright: string, accent: string, bg: string, elevated: string, button: string, buttonHover: string, border: string, themeColor: string } }} TeamDef */
 
   /** @type {Record<string, TeamDef>} */
   const TEAMS = {
@@ -447,6 +447,29 @@
         themeColor: "#140c08",
       },
     },
+    notre_dame: {
+      id: "notre_dame",
+      espnId: "87",
+      label: "Notre Dame",
+      shortLabel: "ND",
+      station: "Sports Radio 960 WSBT",
+      streamUrl: "https://playerservices.streamtheworld.com/api/livestream-redirect/WSBTAMAAC.aac",
+      accent: "notre_dame",
+      title: "Notre Dame · Sports Radio 960 WSBT — PlayDelay",
+      shortTitle: "Notre Dame Radio",
+      group: "independent",
+      theme: {
+        primary: "#0c2340",
+        bright: "#1d4f91",
+        accent: "#c99700",
+        bg: "#080c14",
+        elevated: "#0e1622",
+        button: "#142030",
+        buttonHover: "#1a2a3e",
+        border: "rgba(201, 151, 0, 0.22)",
+        themeColor: "#080c14",
+      },
+    },
   };
 
   const TEAM_IDS = Object.keys(TEAMS);
@@ -477,18 +500,21 @@
   ];
   const BIGTEN_ORDER = ["nebraska", "usc"];
   const ACC_ORDER = ["miami"];
+  const INDEPENDENT_ORDER = ["notre_dame"];
 
   /** Conference display order for pickers / chips (favorites is UI-only). */
-  const GROUP_ORDER = ["big12", "bigten", "acc"];
+  const GROUP_ORDER = ["big12", "bigten", "acc", "independent"];
   const GROUP_LABELS = {
     big12: "Big 12",
     bigten: "Big Ten",
     acc: "ACC",
+    independent: "Independents",
   };
   const GROUP_IDS = {
     big12: BIG12_ORDER,
     bigten: BIGTEN_ORDER,
     acc: ACC_ORDER,
+    independent: INDEPENDENT_ORDER,
   };
 
   /** Default visible favorites in the player team picker (huge taps). */
@@ -596,6 +622,7 @@
     BIG12_ORDER,
     BIGTEN_ORDER,
     ACC_ORDER,
+    INDEPENDENT_ORDER,
     GROUP_ORDER,
     GROUP_LABELS,
     GROUP_IDS,
