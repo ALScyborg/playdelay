@@ -1,12 +1,12 @@
 /**
- * PlayDelay — shared team registry (Big 12, Big Ten, ACC, Independents).
+ * PlayDelay — shared team registry (Big 12, Big Ten, ACC, SEC, Independents).
  * Source of truth for ids, ESPN ids, streams, colors, conference groups.
  * Favorites is UI-only (user list) — not a TeamDef.group.
  */
 (() => {
   "use strict";
 
-  /** @typedef {{ id: string, espnId: string, label: string, shortLabel?: string, station: string, streamUrl: string|null, accent: string, title: string, shortTitle: string, group: "big12"|"bigten"|"acc"|"independent", theme: { primary: string, bright: string, accent: string, bg: string, elevated: string, button: string, buttonHover: string, border: string, themeColor: string } }} TeamDef */
+  /** @typedef {{ id: string, espnId: string, label: string, shortLabel?: string, station: string, streamUrl: string|null, accent: string, title: string, shortTitle: string, group: "big12"|"bigten"|"acc"|"sec"|"independent", theme: { primary: string, bright: string, accent: string, bg: string, elevated: string, button: string, buttonHover: string, border: string, themeColor: string } }} TeamDef */
 
   /** @type {Record<string, TeamDef>} */
   const TEAMS = {
@@ -470,6 +470,29 @@
         themeColor: "#080c14",
       },
     },
+    lsu: {
+      id: "lsu",
+      espnId: "99",
+      label: "LSU",
+      shortLabel: "LSU",
+      station: "Eagle 98.1 WDGL",
+      streamUrl: "https://live.amperwave.net/direct/guaranty-wdglfmaac-ibc1",
+      accent: "lsu",
+      title: "LSU · Eagle 98.1 WDGL — PlayDelay",
+      shortTitle: "LSU Radio",
+      group: "sec",
+      theme: {
+        primary: "#461d7c",
+        bright: "#6a3fa8",
+        accent: "#fdd023",
+        bg: "#0e0816",
+        elevated: "#170e22",
+        button: "#22143a",
+        buttonHover: "#2c1a4a",
+        border: "rgba(253, 208, 35, 0.22)",
+        themeColor: "#0e0816",
+      },
+    },
   };
 
   const TEAM_IDS = Object.keys(TEAMS);
@@ -500,20 +523,23 @@
   ];
   const BIGTEN_ORDER = ["nebraska", "usc"];
   const ACC_ORDER = ["miami"];
+  const SEC_ORDER = ["lsu"];
   const INDEPENDENT_ORDER = ["notre_dame"];
 
   /** Conference display order for pickers / chips (favorites is UI-only). */
-  const GROUP_ORDER = ["big12", "bigten", "acc", "independent"];
+  const GROUP_ORDER = ["big12", "bigten", "acc", "sec", "independent"];
   const GROUP_LABELS = {
     big12: "Big 12",
     bigten: "Big Ten",
     acc: "ACC",
+    sec: "SEC",
     independent: "Independents",
   };
   const GROUP_IDS = {
     big12: BIG12_ORDER,
     bigten: BIGTEN_ORDER,
     acc: ACC_ORDER,
+    sec: SEC_ORDER,
     independent: INDEPENDENT_ORDER,
   };
 
@@ -622,6 +648,7 @@
     BIG12_ORDER,
     BIGTEN_ORDER,
     ACC_ORDER,
+    SEC_ORDER,
     INDEPENDENT_ORDER,
     GROUP_ORDER,
     GROUP_LABELS,
