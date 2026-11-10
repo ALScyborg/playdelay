@@ -6,8 +6,10 @@
 (() => {
   "use strict";
 
-  const SEASON = 2026;
   const SPORT_STORAGE_KEY = "playdelay.lastSport";
+  // Football's ESPN season is the fall year. Keep this pinned so basketball's
+  // academic-year rollover cannot change football requests.
+  const FOOTBALL_SEASON = 2026;
   const SPORTS = {
     football: {
       id: "football",
@@ -15,7 +17,6 @@
       shortLabel: "Football",
       apiPath: "football/college-football",
       espnPath: "college-football",
-      seasonLabel: "2026",
     },
     mbb: {
       id: "mbb",
@@ -23,9 +24,29 @@
       shortLabel: "Basketball",
       apiPath: "basketball/mens-college-basketball",
       espnPath: "mens-college-basketball",
-      seasonLabel: "2025-26",
     },
   };
+
+  /**
+   * ESPN's `season` query is not the same year for both sports.
+   * Football: the fall it is played (2026 season → season=2026).
+   * Men's basketball: the academic season's ending year (2026-27 → season=2027).
+   * One shared year (2026) kept every basketball schedule on 2025-26.
+   * Basketball advances on its own: July–December request next calendar year,
+   * January–June request the season ending this calendar year.
+   */
+  function seasonForSport(sport, now) {
+    if (sport === "mbb") {
+      const d = now instanceof Date ? now : new Date();
+      const year = d.getFullYear();
+      const endingYear = d.getMonth() >= 6 ? year + 1 : year;
+      return {
+        season: endingYear,
+        seasonLabel: endingYear - 1 + "-" + String(endingYear).slice(-2),
+      };
+    }
+    return { season: FOOTBALL_SEASON, seasonLabel: String(FOOTBALL_SEASON) };
+  }
 
   const TEAM_META =
     (window.PlayDelayTeams &&
@@ -79,8 +100,9 @@
     } catch (_) {}
   }
 
-  function sportMeta(sport) {
-    return SPORTS[sport] || SPORTS.football;
+  function sportMeta(sport, now) {
+    const base = SPORTS[sport] || SPORTS.football;
+    return Object.assign({}, base, seasonForSport(base.id, now));
   }
 
   function scheduleApiUrl(espnId, sport) {
@@ -91,7 +113,7 @@
       "/teams/" +
       espnId +
       "/schedule?season=" +
-      SEASON
+      s.season
     );
   }
 
@@ -583,11 +605,14 @@
       sectionTitle.textContent =
         sport === "mbb" ? "Men’s basketball schedule" : "Football schedule";
     }
+    const sMeta = sportMeta(sport);
     if (sectionNote) {
       sectionNote.textContent =
         sport === "mbb"
-          ? "2025-26 men’s basketball via ESPN. Pick a team for colors + schedule. Radio sync uses each team’s flagship station when available."
-          : "2026 football via ESPN. Pick a Big 12 / Big Ten / ACC team for colors + schedule (saved for next visit).";
+          ? sMeta.seasonLabel +
+            " men’s basketball via ESPN, including non-conference games. Pick a team for colors + schedule. Radio sync uses each team’s flagship station when available."
+          : sMeta.seasonLabel +
+            " football via ESPN. Pick a Big 12 / Big Ten / ACC team for colors + schedule (saved for next visit).";
     }
 
     const active = readLandingTeam();
@@ -639,6 +664,7 @@
   window.PlayDelaySchedule = {
     TEAM_META,
     SPORTS,
+    seasonForSport,
     readSport,
     setSport,
     mountPlayer,

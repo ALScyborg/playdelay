@@ -40,7 +40,7 @@ python3 -m http.server 8765
 ## Schedule
 
 - Client-side fetch from ESPN public team schedule JSON (shared ESPN ids for football & MBB).
-- Sports: college football (`season=2026`) and men’s college basketball (`season=2026` → 2025-26).
+- Sports: college football (`season=2026`) and men’s college basketball (ESPN ending year — `season=2027` is 2026-27, including non-conference). Basketball’s year advances each July; football stays on `FOOTBALL_SEASON`.
 - Huge Football | Basketball toggle; landing uses team chips + one schedule panel.
 - Times displayed in the user's local timezone.
 - Basketball uses the same flagship radio streams as football when a stream exists.
