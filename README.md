@@ -1,6 +1,6 @@
-# PlayDelay (Big 12 + Big Ten + ACC)
+# PlayDelay (Big 12 + Big Ten + ACC + SEC)
 
-Landing + delay player for the full **Big 12**, Big Ten (**Nebraska**, **USC**), and ACC (**Miami**). Football & men’s basketball schedules via ESPN. **Radio live** for nearly every team — **Kansas State** stays coming-soon (SurferNetwork JWT). **Free for now:** create a Supabase account, sign in, pick a team, then play.
+Landing + delay player for the **Big 12**, **Big Ten**, **ACC**, **SEC**, and independent **Notre Dame**. Football & men’s basketball schedules via ESPN. **Radio live** where a flagship station publishes a stream the browser can play. **Kansas State** stays coming-soon (SurferNetwork returns 401). **Ole Miss** is not listed (WOXF 105.1 has no public mount). **Free for now:** create a Supabase account, sign in, pick a team, then play.
 
 - Live (GitHub Pages): https://alscyborg.github.io/playdelay/
 - Custom domain: https://playdelay.app/
@@ -9,14 +9,14 @@ Landing + delay player for the full **Big 12**, Big Ten (**Nebraska**, **USC**),
 
 1. Open the site → **Sign in / Sign up** (`login.html`)
 2. Create an account with email + password (min 6 characters), or sign in
-3. You’re sent to **`player.html`** — favorites first, then more teams organized by conference (Big 12 / Big Ten / ACC); Play when a stream is available (no payment gate right now)
+3. You’re sent to **`player.html`** — favorites first, then more teams organized by conference (Big 12 / Big Ten / ACC / SEC / Independents); Play when a stream is available (no payment gate right now)
 
 ## Auth
 
 - Supabase project ref: `itcgsbzcopdkccobcfha`
 - Frontend uses the public anon key only (see `supabase-auth.js` / `usage.js`)
 - Session stored in `localStorage` (`playdelay.supabase.session`)
-- Last team stored in `localStorage` (`playdelay.lastTeam`) — accepts all Big 12 / Big Ten / ACC ids
+- Last team stored in `localStorage` (`playdelay.lastTeam`) — accepts every id in `teams.js`
 - Last sport stored in `localStorage` (`playdelay.lastSport`: `football` | `mbb`)
 - Anonymous usage session id: `playdelay.sessionId`
 - Auth is email/password via Supabase Auth HTTP API (no PIN)
@@ -54,3 +54,6 @@ python3 -m http.server 8765
 - Nebraska (KLIN): StreamTheWorld `KLINAMAAC.aac` redirect (same pattern as Arizona KCUB).
 - Live streams auto-reconnect on stall/error (fresh Amperwave session URL, seek-to-live when seekable); capped at 5 attempts / 60s, then the usual error banner.
 - Teams with `streamUrl: null` (currently Kansas State) show a coming-soon banner; Play enables wherever a stream is set.
+- Indiana plays 93.1 WIBC. The Bloomington flagship WHCC 105.1 has no public mount; WIBC carries the full football broadcast.
+- Missouri (KTGR) may geo-limit game audio near Columbia. The continuous mount is what the player opens.
+- Florida State football is 94.9 TNT WTNT. Men’s basketball on that network is 100.7 WFLA, which is not the stream in the player.

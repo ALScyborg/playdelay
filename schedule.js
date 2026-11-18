@@ -612,7 +612,7 @@
           ? sMeta.seasonLabel +
             " men’s basketball via ESPN, including non-conference games. Pick a team for colors + schedule. Radio sync uses each team’s flagship station when available."
           : sMeta.seasonLabel +
-            " football via ESPN. Pick a Big 12 / Big Ten / ACC team for colors + schedule (saved for next visit).";
+            " football via ESPN. Pick a team for colors + schedule (saved for next visit).";
     }
 
     const active = readLandingTeam();
